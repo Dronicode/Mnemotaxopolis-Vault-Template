@@ -1,10 +1,11 @@
 ---
 selected_book: 
 selected_chapter: 
+parent: "[[Scripture Journal]]"
 ---
 
 ```dataviewjs
-const canon = "New Testament";
+const canon = "Pearl of Great Price";
 const book = dv.current().selected_book;
 const chapter = dv.current().selected_chapter;
 

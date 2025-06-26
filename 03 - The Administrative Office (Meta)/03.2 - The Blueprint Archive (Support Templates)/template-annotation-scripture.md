@@ -1,4 +1,3 @@
-```templatr
 <%*
 const canons = {
   "Old Testament": ["Epistle Dedicatory", "Genesis", "Exodus", "Leviticus", "Numbers", "Deuteronomy", "Joshua", "Judges", "Ruth", "1 Samuel", "2 Samuel", "1 Kings", "2 Kings", "1 Chronicles", "2 Chronicles", "Ezra", "Nehemiah", "Esther", "Job", "Psalms", "Proverbs", "Ecclesiastes", "Song of Solomon", "Isaiah", "Jeremiah", "Lamentations", "Ezekiel", "Daniel", "Hosea", "Joel", "Amos", "Obadiah", "Jonah", "Micah", "Nahum", "Habakkuk", "Zephaniah", "Haggai", "Zechariah", "Malachi"],
@@ -7,32 +6,32 @@ const canons = {
   "Doctrine and Covenants": ["Introduction", "Chronological order of Contents", "Section"],
   "Pearl of Great Price": ["Introduction", "Moses", "Abraham", "Joseph Smith - Matthew", "Joseph Smith - History", "Articles of Faith"]
 };
-const canonShortcodes = {
-  "Old Testament": "OT",
-  "New Testament": "NT",
-  "Book of Mormon": "BoM",
-  "Doctrine and Covenants": "D&C",
-  "Pearl of Great Price": "PGP"
+const canonAbbrevitions = {
+  "Old Testament": "OT", "New Testament": "NT", "Book of Mormon": "BoM", "Doctrine and Covenants": "D&C", "Pearl of Great Price": "PGP"
 };
 const introAndWitnessesChapters = [
   "Title Page of the Book of Mormon", "Introduction", "Testimony of Three Witnesses", "Testimony of Eight Witnesses", "Testimony of the Prophet Joseph Smith", "Brief Explanation about the Book of Mormon"
 ];
+const hasOneChapter = [
+  "Epistle Dedicatory", "Introduction", "Chronological order of Contents", "Joseph Smith - Matthew", "Joseph Smith - History", "Articles of Faith"
+];
 
 const canon = await tp.system.suggester(Object.keys(canons), Object.keys(canons));
-const canonShort = canonShortcodes[canon] ?? canon;
+const canonShort = canonAbbrevitions[canon] ?? canon;
 
 const book = await tp.system.suggester(canons[canon], canons[canon]);
 
 let chapter;
 if (book === "Introduction and Witnesses") {
   chapter = await tp.system.suggester(introAndWitnessesChapters, introAndWitnessesChapters);
-} else if (["Epistle Dedicatory", "Introduction", "Chronological order of Contents", "Joseph Smith - Matthew", "Joseph Smith - History", "Articles of Faith"].includes(book)) {
+} else if (hasOneChapter.includes(book)) {
   chapter = "1";
 } else {
-do {
-	chapter = await tp.system.prompt("Chapter or Section number");
+  do {
+    chapter = await tp.system.prompt("Chapter or Section number");
   } while (!chapter || !/^\d+$/.test(chapter));
 }
+
 let verse;
 do {
   verse = await tp.system.prompt("Verse(s) or paragraph(s) (e.g. 2, 3–5, 1,3,7–9)");
@@ -45,42 +44,41 @@ let tags = tagsInput
   .split(",")
   .map(t => t.trim())
   .filter(Boolean);
-tags.push(canonShort+"-"+book);
+if (book === "Section" || book === "Introduction and Witnesses") {
+  tags.push(`annotation/scripture/${canon}/${chapter}`);
+} else {
+  tags.push(`annotation/scripture/${canon}/${book}`);
+}
 tags = tags.map(t =>
-  t
-    .toLowerCase()
-    .replace(/\s+/g, "_")
-    .replace(/[^\w_]/g, "")
+  t.toLowerCase().split("/").map(part =>
+    part.replace(/\s+/g, "_").replace(/[^\w_]/g, "")
+  ).join("/")
 );
 
+// Construct title/ filename
 const now = tp.date.now("YYYY-MM-DD HH:mm");
 const filename = (() => {
   const timestamp = now.replace(":", "·");
   if (book === "Introduction and Witnesses") {
     return `${canonShort} - ${chapter} ¶${verse} [${timestamp}]`;
   }
-  if (canon === "Doctrine and Covenants" && book === "Section") {
+  if (book === "Section") {
     return `${canonShort} - ${chapter}.${verse} [${timestamp}]`;
   }
   return `${canonShort} - ${book} ${chapter}.${verse} [${timestamp}]`;
 })();
-
 await tp.file.rename(filename);
 
+// Handle frontmatter
 tR = `---
 date_created: ${now}
 canon: ${canon}
-book: ${book}
+book: "[[${book}]]"
 chapter: "${chapter}"
 verse: "${verse}"
 summary: "${summary}"
-tags: [${tags.map(tag => `"${tag}"`).join(", ")}]
----
-# ${book} ${chapter}:${verse}
-## Note: 
+tags: [${tags.map(tag =>`"${tag}"`).join(", ")}]
+---`;
 
-## Related Scriptures:
 
-`;
 %>
-```

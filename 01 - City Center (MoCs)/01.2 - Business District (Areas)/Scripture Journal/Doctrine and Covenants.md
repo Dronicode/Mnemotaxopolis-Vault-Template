@@ -1,6 +1,7 @@
 ---
 selected_book: Introduction
 selected_chapter: 1
+parent: "[[Scripture Journal]]"
 ---
 
 ```dataviewjs
