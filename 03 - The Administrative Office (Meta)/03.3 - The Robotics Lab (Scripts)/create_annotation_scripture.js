@@ -1,140 +1,31 @@
 module.exports = async (tp) => {
-  const canons = {
-    'Old Testament': [
-      'Epistle Dedicatory',
-      'Genesis',
-      'Exodus',
-      'Leviticus',
-      'Numbers',
-      'Deuteronomy',
-      'Joshua',
-      'Judges',
-      'Ruth',
-      '1 Samuel',
-      '2 Samuel',
-      '1 Kings',
-      '2 Kings',
-      '1 Chronicles',
-      '2 Chronicles',
-      'Ezra',
-      'Nehemiah',
-      'Esther',
-      'Job',
-      'Psalms',
-      'Proverbs',
-      'Ecclesiastes',
-      'Song of Solomon',
-      'Isaiah',
-      'Jeremiah',
-      'Lamentations',
-      'Ezekiel',
-      'Daniel',
-      'Hosea',
-      'Joel',
-      'Amos',
-      'Obadiah',
-      'Jonah',
-      'Micah',
-      'Nahum',
-      'Habakkuk',
-      'Zephaniah',
-      'Haggai',
-      'Zechariah',
-      'Malachi',
-    ],
-    'New Testament': [
-      'Matthew',
-      'Mark',
-      'Luke',
-      'John',
-      'Acts',
-      'Romans',
-      '1 Corinthians',
-      '2 Corinthians',
-      'Galatians',
-      'Ephesians',
-      'Philippians',
-      'Colossians',
-      '1 Thessalonians',
-      '2 Thessalonians',
-      '1 Timothy',
-      '2 Timothy',
-      'Titus',
-      'Philemon',
-      'Hebrews',
-      'James',
-      '1 Peter',
-      '2 Peter',
-      '1 John',
-      '2 John',
-      '3 John',
-      'Jude',
-      'Revelation',
-    ],
-    'Book of Mormon': [
-      'Introduction and Witnesses',
-      '1 Nephi',
-      '2 Nephi',
-      'Jacob',
-      'Enos',
-      'Jarom',
-      'Omni',
-      'Words of Mormon',
-      'Mosiah',
-      'Alma',
-      'Helaman',
-      '3 Nephi',
-      '4 Nephi',
-      'Mormon',
-      'Ether',
-      'Moroni',
-    ],
-    'Doctrine and Covenants': [
-      'Introduction',
-      'Chronological order of Contents',
-      'Section',
-    ],
-    'Pearl of Great Price': [
-      'Introduction',
-      'Moses',
-      'Abraham',
-      'Joseph Smith - Matthew',
-      'Joseph Smith - History',
-      'Articles of Faith',
-    ],
-  };
-  const canonAbbrevitions = {
-    'Old Testament': 'OT',
-    'New Testament': 'NT',
-    'Book of Mormon': 'BoM',
-    'Doctrine and Covenants': 'D&C',
-    'Pearl of Great Price': 'PGP',
-  };
-  const introAndWitnessesChapters = [
-    'Title Page of the Book of Mormon',
-    'Introduction',
-    'Testimony of Three Witnesses',
-    'Testimony of Eight Witnesses',
-    'Testimony of the Prophet Joseph Smith',
-    'Brief Explanation about the Book of Mormon',
-  ];
-  const hasOneChapter = [
-    'Epistle Dedicatory',
-    'Introduction',
-    'Chronological order of Contents',
-    'Joseph Smith - Matthew',
-    'Joseph Smith - History',
-    'Articles of Faith',
-  ];
+  const canonsFile = await tp.file.find_tfile('lib/canons.json');
+  const canons = JSON.parse(await app.vault.read(canonsFile));
+
+  const canonAbbreviationsFile = await tp.file.find_tfile(
+    'lib/canonAbbreviations.json',
+  );
+  const canonAbbreviations = JSON.parse(
+    await app.vault.read(canonAbbreviationsFile),
+  );
+
+  const introAndWitnessesChaptersFile = await tp.file.find_tfile(
+    'lib/introAndWitnessesChapters.json',
+  );
+  const introAndWitnessesChapters = JSON.parse(
+    await app.vault.read(introAndWitnessesChaptersFile),
+  );
+
+  const hasOneChapterFile = await tp.file.find_tfile('lib/hasOneChapter.json');
+  const hasOneChapter = JSON.parse(await app.vault.read(hasOneChapterFile));
 
   const canon = await tp.system.suggester(
     Object.keys(canons),
     Object.keys(canons),
   );
-  const canonShort = canonAbbrevitions[canon] ?? canon;
+  const canonShort = canonAbbreviations[canon] ?? canon;
 
   const book = await tp.system.suggester(canons[canon], canons[canon]);
-
   let chapter;
   if (book === 'Introduction and Witnesses') {
     chapter = await tp.system.suggester(
@@ -204,5 +95,7 @@ module.exports = async (tp) => {
   verse: "${verse}"
   summary: "${summary}"
   tags: [${tags.map((tag) => `"${tag}"`).join(', ')}]
-  ---`;
+---
+
+`;
 };
