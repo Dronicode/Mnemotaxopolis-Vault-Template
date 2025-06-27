@@ -54,16 +54,41 @@ module.exports = async (tp) => {
 
   await tp.file.rename(filename);
 
-  // Return frontmatter string
-  return `---
-  date_created: ${now}
-  canon: ${canon}
-  book: "[[${book}]]"
-  chapter: "${chapter}"
-  verse: "${verse}"
-  summary: "${summary}"
-  tags: [${tags.map((tag) => `"${tag}"`).join(", ")}]
+  // Check for parent notes
+  let bookField, chapterField, parentNoteName;
+  if (/^\d+$/.test(chapter)) {
+    parentNoteName = `${canonShort} - ${book}`;
+    bookField = `[[${parentNoteName}|${book}]]`;
+    chapterField = `${chapter}`;
+  } else {
+    parentNoteName = `${canonShort} - ${chapter}`;
+    bookField = `${book}`;
+    chapterField = `[[${parentNoteName}|${chapter}]]`;
+  }
+
+  parentNote = await tp.file.find_tfile(parentNoteName);
+
+  if (parentNote) {
+    // Parent note exists, you can use parentNote.path, etc.
+    // For example:
+    console.log(`Parent note found: ${parentNote.path}`);
+  } else {
+    // Parent note does not exist
+    console.log("Parent note not found.");
+  }
+
+  // Frontmatter construction
+  let frontmatter = `---
+date_created: ${now}
+canon: "${canon}"
+book: "${bookField}"
+chapter: "${chapterField}"
+verse: "${verse}"
+summary: "${summary}"
+tags: [${tags.map((tag) => `"${tag}"`).join(", ")}]
 ---
 
 `;
+
+  return frontmatter;
 };
