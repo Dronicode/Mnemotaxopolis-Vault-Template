@@ -1,13 +1,18 @@
 module.exports = async (tp) => {
   // prompts v2
-  const canon = await tp.user.promptFromDatafile(tp, "canons");
+  const canon = await tp.user.promptFromDict(tp, "canons");
   console.log("canon =" + canon);
-  // Import data
-  const canonsFile = await tp.file.find_tfile("data/canons.json");
-  const CANONS = JSON.parse(await app.vault.read(canonsFile));
 
-  const canonAbbreviationsFile = await tp.file.find_tfile("data/canonAbbreviations.json");
-  const CANON_ABBREVIATIONS = JSON.parse(await app.vault.read(canonAbbreviationsFile));
+  const canonShort = await tp.user.promptFromDict(tp, "canonsShort", canon);
+  console.log("canonShort =" + canonShort);
+
+  const book = await tp.user.promptFromDict(tp, "canons", canon);
+  console.log("book =" + book);
+  // Import data
+
+  // const canonAbbreviationsFile = await tp.file.find_tfile("data/canonAbbreviations.json");
+  // const CANON_ABBREVIATIONS = JSON.parse(await app.vault.read(canonAbbreviationsFile));
+  // const canonShort = CANON_ABBREVIATIONS[canon] ?? canon;
 
   const introAndWitnessesChaptersFile = await tp.file.find_tfile("data/introAndWitnessesChapters.json");
   const INTRO_AND_WITNESSES_CHAPTERS = JSON.parse(await app.vault.read(introAndWitnessesChaptersFile));
@@ -18,9 +23,7 @@ module.exports = async (tp) => {
   // Prompt user input
   // const canon = await tp.system.suggester(Object.keys(CANONS), Object.keys(CANONS));
 
-  const canonShort = CANON_ABBREVIATIONS[canon] ?? canon;
-
-  const book = await tp.system.suggester(CANONS[canon], CANONS[canon]);
+  // const book = await tp.system.suggester(CANONS[canon], CANONS[canon]);
 
   let chapter;
   if (book === "Introduction and Witnesses") {
