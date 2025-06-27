@@ -1,34 +1,12 @@
 module.exports = async (tp) => {
-  // prompts v2
+  // Get user input
   const canon = await tp.user.promptFromDict(tp, "canons");
-  console.log("canon =" + canon);
-
   const canonShort = await tp.user.promptFromDict(tp, "canonsShort", canon);
-  console.log("canonShort =" + canonShort);
-
   const book = await tp.user.promptFromDict(tp, "canons", canon);
-  console.log("book =" + book);
-  // Import data
-
-  // const canonAbbreviationsFile = await tp.file.find_tfile("data/canonAbbreviations.json");
-  // const CANON_ABBREVIATIONS = JSON.parse(await app.vault.read(canonAbbreviationsFile));
-  // const canonShort = CANON_ABBREVIATIONS[canon] ?? canon;
-
-  const introAndWitnessesChaptersFile = await tp.file.find_tfile("data/introAndWitnessesChapters.json");
-  const INTRO_AND_WITNESSES_CHAPTERS = JSON.parse(await app.vault.read(introAndWitnessesChaptersFile));
-
-  const hasOneChapterFile = await tp.file.find_tfile("data/hasOneChapter.json");
-  const HAS_ONE_CHAPTER = JSON.parse(await app.vault.read(hasOneChapterFile));
-
-  // Prompt user input
-  // const canon = await tp.system.suggester(Object.keys(CANONS), Object.keys(CANONS));
-
-  // const book = await tp.system.suggester(CANONS[canon], CANONS[canon]);
-
   let chapter;
   if (book === "Introduction and Witnesses") {
-    chapter = await tp.system.suggester(INTRO_AND_WITNESSES_CHAPTERS, INTRO_AND_WITNESSES_CHAPTERS);
-  } else if (HAS_ONE_CHAPTER.includes(book)) {
+    chapter = await tp.user.promptFromList(tp, "introAndWitnessesChapters");
+  } else if (await tp.user.existsInDatafile(tp, "hasOneChapter", book)) {
     chapter = "1";
   } else {
     do {
