@@ -1,35 +1,48 @@
 module.exports = async (tp) => {
+  // const annotationType = await tp.system.suggester(
+  //   ["verse", "chapter", "book", "volume"],
+  //   ["verse", "chapter", "book", "volume"],
+  //   "Is this note for verses, a chapter, a book, or a whole volume?"
+  // );
   // Get user input
-  const canon = await tp.user.promptFromDict(tp, "canons");
-  const canonShort = await tp.user.promptFromDict(tp, "canonsShort", canon);
-  const book = await tp.user.promptFromDict(tp, "canons", canon);
-  let chapter;
-  if (book === "Introduction and Witnesses") {
-    chapter = await tp.user.promptFromList(tp, "introAndWitnessesChapters");
-  } else if (await tp.user.existsInDatafile(tp, "hasOneChapter", book)) {
-    chapter = "1";
-  } else {
-    do {
-      chapter = await tp.system.prompt("Chapter or Section number");
-    } while (!chapter || !/^\d+$/.test(chapter));
+  const annotationType = "verse";
+  const input = {};
+
+  input.volume = await tp.user.promptFromDict(tp, "volumesAndBooks");
+  input.volumeShort = await tp.user.promptFromDict(tp, "volumesShort", input.volume);
+  if (["verse", "chapter", "book"].includes(annotationType)) {
+    input.book = await tp.user.promptFromDict(tp, "volumesAndBooks", input.volume);
   }
+  if (["verse", "chapter"].includes(annotationType)) {
+    if (input.book === "Introduction and Witnesses") {
+      input.chapter = await tp.user.promptFromList(tp, "introAndWitnessesChapters");
+    } else if (await tp.user.existsInDatafile(tp, "hasOneChapter", input.book)) {
+      input.chapter = "1";
+    } else {
+      do {
+        input.chapter = await tp.system.prompt("Chapter or Section number");
+      } while (!input.chapter || !/^\d+$/.test(input.chapter));
+    }
+  }
+  if (annotationType === "verse") {
+    do {
+      input.verse = await tp.system.prompt("Verse(s) or paragraph(s) (e.g. 2, 3-5, 1,3,7-9)");
+    } while (!input.verse || !/^(\d+([--]\d+)?)(,\s*\d+([--]\d+)?)*$/.test(input.verse));
+  }
+  input.summary = await tp.system.prompt("Enter a short summary for this annotation");
 
-  let verse;
-  do {
-    verse = await tp.system.prompt("Verse(s) or paragraph(s) (e.g. 2, 3-5, 1,3,7-9)");
-  } while (!verse || !/^(\d+([--]\d+)?)(,\s*\d+([--]\d+)?)*$/.test(verse));
-
-  const summary = await tp.system.prompt("Enter a short summary for this annotation");
-
-  const tagsInput = await tp.system.prompt("Enter topic tags (e.g. faith, hope, charity)");
-  let tags = tagsInput
+  input.tagsInput = await tp.system.prompt("Enter topic tags (e.g. faith, hope, charity)");
+  let tags = input.tagsInput
     .split(",")
     .map((t) => t.trim())
     .filter(Boolean);
-  if (book === "Section" || book === "Introduction and Witnesses") {
-    tags.push(`annotation/scripture/${canon}/${chapter}`);
+
+  // Add and format tags
+
+  if (input.book === "Section" || input.book === "Introduction and Witnesses") {
+    tags.push(`annotation/scripture/${input.volume}/${input.chapter}`);
   } else {
-    tags.push(`annotation/scripture/${canon}/${book}`);
+    tags.push(`annotation/scripture/${input.volume}/${input.book}`);
   }
   tags = tags.map((t) =>
     t
@@ -43,27 +56,27 @@ module.exports = async (tp) => {
   const now = tp.date.now("YYYY-MM-DD HH:mm");
   const filename = (() => {
     const timestamp = now.replace(":", "·");
-    if (book === "Introduction and Witnesses") {
-      return `${canonShort} - ${chapter} ¶${verse} [${timestamp}]`;
+    if (input.book === "Introduction and Witnesses") {
+      return `${input.volumeShort} - ${input.chapter} ¶${input.verse} [${input.timestamp}]`;
     }
-    if (book === "Section") {
-      return `${canonShort} - ${chapter}.${verse} [${timestamp}]`;
+    if (input.book === "Section") {
+      return `${input.volumeShort} - ${input.chapter}.${input.verse} [${timestamp}]`;
     }
-    return `${canonShort} - ${book} ${chapter}.${verse} [${timestamp}]`;
+    return `${input.volumeShort} - ${input.book} ${input.chapter}.${input.verse} [${timestamp}]`;
   })();
 
   await tp.file.rename(filename);
 
   // Check for parent notes
   let bookField, chapterField, parentNoteName;
-  if (/^\d+$/.test(chapter)) {
-    parentNoteName = `${canonShort} - ${book}`;
-    bookField = `[[${parentNoteName}|${book}]]`;
-    chapterField = `${chapter}`;
+  if (/^\d+$/.test(input.chapter)) {
+    parentNoteName = `${input.volumeShort} - ${input.book}`;
+    bookField = `[[${parentNoteName}|${input.book}]]`;
+    chapterField = `${input.chapter}`;
   } else {
-    parentNoteName = `${canonShort} - ${chapter}`;
-    bookField = `${book}`;
-    chapterField = `[[${parentNoteName}|${chapter}]]`;
+    parentNoteName = `${input.volumeShort} - ${input.chapter}`;
+    bookField = `${input.book}`;
+    chapterField = `[[${parentNoteName}|${input.chapter}]]`;
   }
 
   parentNote = await tp.file.find_tfile(parentNoteName);
@@ -80,11 +93,11 @@ module.exports = async (tp) => {
   // Frontmatter construction
   let frontmatter = `---
 date_created: ${now}
-canon: "${canon}"
+volume: "${input.volume}"
 book: "${bookField}"
 chapter: "${chapterField}"
-verse: "${verse}"
-summary: "${summary}"
+verse: "${input.verse}"
+summary: "${input.summary}"
 tags: [${tags.map((tag) => `"${tag}"`).join(", ")}]
 ---
 
