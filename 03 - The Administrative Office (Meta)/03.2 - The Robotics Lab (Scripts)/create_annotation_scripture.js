@@ -1,4 +1,4 @@
-module.exports = async (tp) => {
+module.exports = async (tp, args) => {
   // const annotationType = await tp.system.suggester(
   //   ["verse", "chapter", "book", "volume"],
   //   ["verse", "chapter", "book", "volume"],
@@ -8,27 +8,36 @@ module.exports = async (tp) => {
   const annotationType = "verse";
   const input = {};
 
-  input.volume = await tp.user.promptFromDict(tp, "volumesAndBooks");
+  // Get volume
+  input.volume = args.volume ?? (await tp.user.promptFromDict(tp, "volumesAndBooks"));
   input.volumeShort = await tp.user.promptFromDict(tp, "volumesShort", input.volume);
+
+  // Get book
   if (["verse", "chapter", "book"].includes(annotationType)) {
     input.book = await tp.user.promptFromDict(tp, "volumesAndBooks", input.volume);
   }
+
+  // Get chapter
   if (["verse", "chapter"].includes(annotationType)) {
-    if (input.book === "Introduction and Witnesses") {
-      input.chapter = await tp.user.promptFromList(tp, "introAndWitnessesChapters");
-    } else if (await tp.user.existsInDatafile(tp, "hasOneChapter", input.book)) {
-      input.chapter = "1";
+    if (await tp.user.existsInDatafile(tp, "namedChapters", input.book)) {
+      input.chapter = await tp.user.promptFromDict(tp, "namedChapters", input.book);
+    } else if (await tp.user.existsInDatafile(tp, "hasParagraphs", input.book)) {
+      input.chapter = 1;
     } else {
       do {
         input.chapter = await tp.system.prompt("Chapter or Section number");
       } while (!input.chapter || !/^\d+$/.test(input.chapter));
     }
   }
+
+  // Get verse
   if (annotationType === "verse") {
     do {
       input.verse = await tp.system.prompt("Verse(s) or paragraph(s) (e.g. 2, 3-5, 1,3,7-9)");
     } while (!input.verse || !/^(\d+([--]\d+)?)(,\s*\d+([--]\d+)?)*$/.test(input.verse));
   }
+
+  // Summary and tags
   input.summary = await tp.system.prompt("Enter a short summary for this annotation");
 
   input.tagsInput = await tp.system.prompt("Enter topic tags (e.g. faith, hope, charity)");
@@ -37,12 +46,10 @@ module.exports = async (tp) => {
     .map((t) => t.trim())
     .filter(Boolean);
 
-  // Add and format tags
-
-  if (input.book === "Section" || input.book === "Introduction and Witnesses") {
-    tags.push(`annotation/scripture/${input.volume}/${input.chapter}`);
+  if (input.book === "D&C" || (await tp.user.existsInDatafile(tp, "namedChapters", input.book))) {
+    tags.push(`scripture/${input.volume}/${input.chapter}`);
   } else {
-    tags.push(`annotation/scripture/${input.volume}/${input.book}`);
+    tags.push(`scripture/${input.volume}/${input.book}`);
   }
   tags = tags.map((t) =>
     t
@@ -54,18 +61,17 @@ module.exports = async (tp) => {
 
   // Construct title/ filename
   const now = tp.date.now("YYYY-MM-DD HH:mm");
-  const filename = (() => {
-    const timestamp = now.replace(":", "·");
-    if (input.book === "Introduction and Witnesses") {
-      return `${input.volumeShort} - ${input.chapter} ¶${input.verse} [${input.timestamp}]`;
-    }
-    if (input.book === "Section") {
-      return `${input.volumeShort} - ${input.chapter}.${input.verse} [${timestamp}]`;
-    }
-    return `${input.volumeShort} - ${input.book} ${input.chapter}.${input.verse} [${timestamp}]`;
-  })();
-
-  await tp.file.rename(filename);
+  const timestamp = now.replace(":", "·");
+  let filename;
+  if (await tp.user.existsInDatafile(tp, "hasParagraphs", input.chapter)) {
+    filename = `${input.volumeShort} - ${input.chapter} ¶${input.verse} [${timestamp}]`;
+  } else if (await tp.user.existsInDatafile(tp, "hasParagraphs", input.book)) {
+    filename = `${input.volumeShort} - ${input.book} ¶${input.verse} [${timestamp}]`;
+  } else if (input.book === "D&C") {
+    filename = `${input.volumeShort} - ${input.chapter}.${input.verse} [${timestamp}]`;
+  } else {
+    filename = `${input.volumeShort} - ${input.book} ${input.chapter}.${input.verse} [${timestamp}]`;
+  }
 
   // Check for parent notes
   let bookField, chapterField, parentNoteName;
@@ -90,8 +96,8 @@ module.exports = async (tp) => {
     console.log("Parent note not found.");
   }
 
-  // Frontmatter construction
-  let frontmatter = `---
+  // Build frontmatter and body
+  const frontmatter = `---
 date_created: ${now}
 volume: "${input.volume}"
 book: "${bookField}"
@@ -102,6 +108,7 @@ tags: [${tags.map((tag) => `"${tag}"`).join(", ")}]
 ---
 
 `;
+  const body = "";
 
-  return frontmatter;
+  await tp.user.createNoteWithFrontmatter({ filename, frontmatter, body });
 };

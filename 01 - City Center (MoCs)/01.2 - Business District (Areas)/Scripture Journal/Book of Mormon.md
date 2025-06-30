@@ -4,7 +4,27 @@ selected_chapter: 1
 parent: "[[Scripture Journal]]"
 ---
 
-```dataviewjs
+# Add a new note
+
+```meta-bind-button
+label: Add a new Book of Mormon note
+icon: ""
+style: primary
+class: ""
+cssStyle: ""
+backgroundImage: ""
+tooltip: ""
+id: ""
+hidden: false
+actions:
+  - type: runTemplaterFile
+    templateFile: 03 - The Administrative Office (Meta)/03.1 - The Factory (Templates)/template-annotation-scripture-bom.md
+
+```
+
+## View existing notes
+
+````dataviewjs
 const canon = "Book of Mormon";
 const bookOrder = [
   "Introduction and Witnesses",
@@ -79,16 +99,16 @@ dv.table(
   dv.pages('"TESTS"')
     .where(p => p.book === book && (!chapter || p.chapter == chapter))
     .map(p => ({
-	  ...p,
-	  sortKey: [
-	    p.book ?? "",
-	    isNaN(parseInt(p.chapter))
-	      ? introAndWitnessesChapters.indexOf(p.chapter)
-	      : parseInt(p.chapter),
-	    parseInt((p.verse ?? "").match(/\d+/)?.[0] ?? 0),
-	    -(p.date_created ?? p.file.ctime).valueOf()
-	  ]
-	}))
+   ...p,
+   sortKey: [
+     p.book ?? "",
+     isNaN(parseInt(p.chapter))
+       ? introAndWitnessesChapters.indexOf(p.chapter)
+       : parseInt(p.chapter),
+     parseInt((p.verse ?? "").match(/\d+/)?.[0] ?? 0),
+     -(p.date_created ?? p.file.ctime).valueOf()
+   ]
+ }))
     .sort(p => p.sortKey)
     .map(p => {
       const isTextChapter = isNaN(parseInt(p.chapter));
@@ -103,4 +123,4 @@ dv.table(
       ];
     })
 );
-```
+````

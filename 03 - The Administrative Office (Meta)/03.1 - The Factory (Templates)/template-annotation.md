@@ -1,3 +1,6 @@
+---
+parent: "[[City Map (Top-level-index)]]"
+---
 <%*
 const noteType = await tp.system.suggester(
   ["Scripture Annotation", "Conference Talk", "Journal Entry"],
@@ -8,5 +11,5 @@ const templateMap = {
   conference: "template-annotation-conference",
   journal: "template-annotation-journal"
 };
-tR += await tp.file.include(`[[${templateMap[noteType]}]]`);
+await tp.file.include(`[[${templateMap[noteType]}]]`);
 %>

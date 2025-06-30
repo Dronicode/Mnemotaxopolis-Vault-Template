@@ -3,7 +3,23 @@ selected_book: Introduction
 selected_chapter: 1
 parent: "[[Scripture Journal]]"
 ---
+## Add a new note
+```meta-bind-button
+label: Add a new Doctrine and Covenants note
+icon: ""
+style: primary
+class: ""
+cssStyle: ""
+backgroundImage: ""
+tooltip: ""
+id: ""
+hidden: false
+actions:
+  - type: runTemplaterFile
+    templateFile: 03 - The Administrative Office (Meta)/03.1 - The Factory (Templates)/template-annotation-scripture-dandc.md
 
+```
+## View existing notes
 ```dataviewjs
 const canon = "Doctrine and Covenants";
 const bookOrder = [

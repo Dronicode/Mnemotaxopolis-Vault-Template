@@ -3,7 +3,23 @@ selected_book:
 selected_chapter: 
 parent: "[[Scripture Journal]]"
 ---
+## Add a new note
+```meta-bind-button
+label: Add a new New Testament note
+icon: ""
+style: primary
+class: ""
+cssStyle: ""
+backgroundImage: ""
+tooltip: ""
+id: ""
+hidden: false
+actions:
+  - type: runTemplaterFile
+    templateFile: 03 - The Administrative Office (Meta)/03.1 - The Factory (Templates)/template-annotation-scripture-nt.md
 
+```
+## View existing notes
 ```dataviewjs
 const canon = "New Testament";
 const book = dv.current().selected_book;

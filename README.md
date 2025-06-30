@@ -1,3 +1,6 @@
+---
+parent: "[[City Map (Top-level-index)]]"
+---
 # Mnemotaxopolis
 
 **Mnemotaxopolis** is a personal knowledge management (PKM) system, sometimes called a 'second brain'. Beginning as an attempt to curate a well-organized collection of ideas, information, and insights, a Mnemotaxipolis can grow from just a library of notes into a personal monument of knowledge and wisdom.

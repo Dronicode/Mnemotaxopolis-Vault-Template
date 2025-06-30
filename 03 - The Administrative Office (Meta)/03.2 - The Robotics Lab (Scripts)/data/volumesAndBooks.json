@@ -1,5 +1,6 @@
 {
   "Old Testament": [
+    "Title Page",
     "Epistle Dedicatory",
     "Genesis",
     "Exodus",
@@ -42,6 +43,7 @@
     "Malachi"
   ],
   "New Testament": [
+    "Title Page",
     "Matthew",
     "Mark",
     "Luke",
@@ -86,17 +88,16 @@
     "4 Nephi",
     "Mormon",
     "Ether",
-    "Moroni"
+    "Moroni",
+    "Reference Guide to the Book of Mormon"
   ],
-  "Doctrine and Covenants": [
-    "Introduction",
-    "Chronological order of Contents",
-    "Section"
-  ],
+  "Doctrine and Covenants": ["Introduction and Chronology", "D&C", "Official Declarations"],
   "Pearl of Great Price": [
+    "Title Page",
     "Introduction",
     "Moses",
     "Abraham",
+    "Facsimiles",
     "Joseph Smith - Matthew",
     "Joseph Smith - History",
     "Articles of Faith"
