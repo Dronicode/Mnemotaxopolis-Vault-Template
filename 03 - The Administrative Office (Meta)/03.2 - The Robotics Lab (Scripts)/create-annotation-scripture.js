@@ -6,9 +6,7 @@ module.exports = async (tp, args) => {
     "Is this note for verses, a chapter, a book, or a whole volume?"
   );
 
-  //TODO correct prompt messages for chapter/ section and verse/ paragraph
   // Get user input
-  // const annotationType = "verse";
   const input = {};
 
   // Get volume
@@ -28,7 +26,11 @@ module.exports = async (tp, args) => {
       input.chapter = 1;
     } else {
       do {
-        input.chapter = await tp.system.prompt("Chapter or Section number");
+        if (input.volumeShort === "D&C") {
+          input.chapter = await tp.system.prompt("Section number");
+        } else {
+          input.chapter = await tp.system.prompt("Chapter number");
+        }
       } while (!input.chapter || !/^\d+$/.test(input.chapter));
     }
   }
@@ -36,7 +38,11 @@ module.exports = async (tp, args) => {
   // Get verse
   if (annotationType === "verse") {
     do {
-      input.verse = await tp.system.prompt("Verse(s) or paragraph(s) (e.g. 2, 3-5, 1,3,7-9)");
+      if (await tp.user["exists-in-datafile"](tp, "has-paragraphs", input.book)) {
+        input.verse = await tp.system.prompt("Paragraph(s) (e.g. 2, 3-5, 1,3,7-9)");
+      } else {
+        input.verse = await tp.system.prompt("Verse(s) (e.g. 2, 3-5, 1,3,7-9)");
+      }
     } while (!input.verse || !/^(\d+([--]\d+)?)(,\s*\d+([--]\d+)?)*$/.test(input.verse));
   }
 
@@ -68,11 +74,7 @@ module.exports = async (tp, args) => {
     filenameParts.push(" - ");
   }
   // if there is a book but skip if it is D&C or has a named chapter
-  if (
-    input.book &&
-    input.book != "D&C" &&
-    !(await tp.user["exists-in-datafile"](tp, "named-chapters", input.chapter))
-  ) {
+  if (input.book && input.book != "D&C" && !(await tp.user["exists-in-datafile"](tp, "named-chapters", input.book))) {
     filenameParts.push(input.book + " ");
   }
   // if there is a chapter and book does not have paragraphs
