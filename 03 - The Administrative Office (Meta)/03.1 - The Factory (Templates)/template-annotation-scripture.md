@@ -1,4 +1,4 @@
 ---
 parent: "[[template-annotation]]"
 ---
-<%* await tp.user.create_annotation_scripture(tp) %>
+<%* await tp.user["create-annotation-scripture"](tp) %>

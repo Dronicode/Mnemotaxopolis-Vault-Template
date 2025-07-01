@@ -1,4 +1,4 @@
 ---
 parent: "[[template-annotation-scripture]]"
 ---
-<%* await tp.user.create_annotation_scripture(tp, { volume: "Old Testament" }) %>
+<%* await tp.user["create-annotation-scripture"](tp,  {volume: "Old Testament"} ) %>
