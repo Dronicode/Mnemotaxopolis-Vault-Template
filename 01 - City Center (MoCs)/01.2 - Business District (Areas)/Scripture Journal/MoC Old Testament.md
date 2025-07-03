@@ -2,10 +2,11 @@
 selected_book: 
 selected_chapter: 
 parent: "[[Scripture Journal]]"
+note_type: MoC
 ---
 ## Add a new note
 ```meta-bind-button
-label: Add a new Pearl of Great Price note
+label: Add a new Old Testament note
 icon: ""
 style: primary
 class: ""
@@ -16,12 +17,12 @@ id: ""
 hidden: false
 actions:
   - type: runTemplaterFile
-    templateFile: 03 - The Administrative Office (Meta)/03.1 - The Factory (Templates)/template-annotation-scripture-pgp.md
+    templateFile: 03 - The Administrative Office (Meta)/03.1 - The Factory (Templates)/template-studynote-scripture-ot.md
 
 ```
 ## View existing notes
 ```dataviewjs
-const canon = "Pearl of Great Price";
+const canon = "Old Testament";
 const book = dv.current().selected_book;
 const chapter = dv.current().selected_chapter;
 

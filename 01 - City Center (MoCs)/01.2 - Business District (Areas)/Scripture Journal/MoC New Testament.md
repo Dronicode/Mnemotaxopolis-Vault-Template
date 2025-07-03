@@ -2,6 +2,7 @@
 selected_book: 
 selected_chapter: 
 parent: "[[Scripture Journal]]"
+note_type: MoC
 ---
 ## Add a new note
 ```meta-bind-button
@@ -16,7 +17,7 @@ id: ""
 hidden: false
 actions:
   - type: runTemplaterFile
-    templateFile: 03 - The Administrative Office (Meta)/03.1 - The Factory (Templates)/template-annotation-scripture-nt.md
+    templateFile: 03 - The Administrative Office (Meta)/03.1 - The Factory (Templates)/template-studynote-scripture-nt.md
 
 ```
 ## View existing notes

@@ -1,4 +1,4 @@
-module.exports = async (tp, args) => {
+module.exports = async (tp, args = {}) => {
   // Note tier selection
   const annotationType = await tp.system.suggester(
     ["verse", "chapter", "book", "volume"],
@@ -23,7 +23,7 @@ module.exports = async (tp, args) => {
     if (await tp.user["exists-in-datafile"](tp, "named-chapters", input.book)) {
       input.chapter = await tp.user["prompt-from-dict"](tp, "named-chapters", input.book);
     } else if (await tp.user["exists-in-datafile"](tp, "has-paragraphs", input.book)) {
-      input.chapter = 1;
+      // Books with paragraphs have no chapters.
     } else {
       do {
         if (input.volumeShort === "D&C") {
@@ -55,11 +55,18 @@ module.exports = async (tp, args) => {
     .map((t) => t.trim())
     .filter(Boolean);
 
-  if (input.book === "D&C" || (await tp.user["exists-in-datafile"](tp, "named-chapters", input.book))) {
-    tags.push(`scripture/${input.volume}/${input.chapter}`);
-  } else {
-    tags.push(`scripture/${input.volume}/${input.book}`);
+  // Add hierarchy tag
+  let hierarchyTag = ["scripture", input.volume];
+  if (annotationType !== "volume") {
+    if (input.book === "D&C") {
+      hierarchyTag.push("DandC");
+    } else {
+      hierarchyTag.push(input.book);
+    }
   }
+  if (annotationType === "chapter" || annotationType === "verse") hierarchyTag.push(input.chapter);
+  tags.push(hierarchyTag.filter(Boolean).join("/"));
+
   tags = tags.map((t) =>
     t
       .toLowerCase()
@@ -68,39 +75,46 @@ module.exports = async (tp, args) => {
       .join("/")
   );
 
-  let filenameParts = [input.volumeShort];
-  // if there is more than just a volume
-  if (annotationType != "volume") {
-    filenameParts.push(" - ");
+  // build filename
+  let filename;
+  if (annotationType == "volume") {
+    filename = input.volumeShort;
   }
-  // if there is a book but skip if it is D&C or has a named chapter
-  if (input.book && input.book != "D&C" && !(await tp.user["exists-in-datafile"](tp, "named-chapters", input.book))) {
-    filenameParts.push(input.book + " ");
-  }
-  // if there is a chapter and book does not have paragraphs
-  if (input.chapter && !(await tp.user["exists-in-datafile"](tp, "has-paragraphs", input.book))) {
-    // if it is D&C, add "section"
-    if (input.book === "D&C") filenameParts.push("Section ");
-    filenameParts.push(input.chapter);
-  }
-  // if there is a verse
-  if (input.verse) {
-    // symbol before it depends if it is a verse or a paragraph
-    if (
-      (await tp.user["exists-in-datafile"](tp, "has-paragraphs", input.book)) ||
-      (await tp.user["exists-in-datafile"](tp, "has-paragraphs", input.chapter))
-    ) {
-      filenameParts.push(" ¶");
+  if (annotationType == "book") {
+    if (input.book === "D&C") {
+      filename = input.volumeShort + " - Sections";
     } else {
-      filenameParts.push(".");
+      filename = input.volumeShort + " - " + input.book;
     }
-    filenameParts.push(input.verse + " ");
   }
+  if (annotationType == "chapter") {
+    if (input.book === "D&C") {
+      filename = input.volumeShort + " - Section " + input.chapter;
+    } else if (await tp.user["exists-in-datafile"](tp, "has-paragraphs", input.book)) {
+      filename = input.volumeShort + " - " + input.book;
+    } else if (await tp.user["exists-in-datafile"](tp, "named-chapters", input.book)) {
+      filename = input.volumeShort + " - " + input.chapter;
+    } else {
+      filename = input.volumeShort + " - " + input.book + " " + input.chapter;
+    }
+  }
+  if (annotationType == "verse") {
+    if (input.book === "D&C") {
+      filename = input.volumeShort + " - Section " + input.chapter + "." + input.verse;
+    } else if (await tp.user["exists-in-datafile"](tp, "has-paragraphs", input.book)) {
+      filename = input.volumeShort + " - " + input.book + " ¶" + input.verse;
+    } else if (await tp.user["exists-in-datafile"](tp, "has-paragraphs", input.chapter)) {
+      filename = input.volumeShort + " - " + input.chapter + " ¶" + input.verse;
+    } else if (await tp.user["exists-in-datafile"](tp, "named-chapters", input.book)) {
+      filename = input.volumeShort + " - " + input.chapter + "." + input.verse;
+    } else {
+      filename = input.volumeShort + " - " + input.book + " " + input.chapter + "." + input.verse;
+    }
+  }
+
   const now = tp.date.now("YYYY-MM-DD HH:mm");
-  filenameParts.push(" [" + now.replace(":", "·") + "]");
-  // Compose filename
-  const filename = `${filenameParts.join("")}`;
-  // TODO test named chapters
+  filename = filename + " [" + now.replace(":", "·") + "]";
+
   // Check for parent notes
   let volumeField, bookField, chapterField, parentNoteName;
   if (annotationType === "volume") {
@@ -112,7 +126,7 @@ module.exports = async (tp, args) => {
     bookField = `[[${parentNoteName}|${input.book}]]`;
   } else {
     volumeField = input.volume;
-    if (/^\d+$/.test(input.chapter)) {
+    if (/^\d+$/.test(input.chapter) || !input.chapter) {
       parentNoteName = `${input.volumeShort} - ${input.book}`;
       bookField = `[[${parentNoteName}|${input.book}]]`;
       chapterField = input.chapter;
@@ -137,6 +151,7 @@ module.exports = async (tp, args) => {
   // Build frontmatter and body
   const frontmatter = `---
   date_created: "${now}"
+  note_type: studynote
   volume: "${volumeField}"
   ${input.book ? `book: "${bookField}"\n` : ""}
   ${input.chapter ? `chapter: "${chapterField}"\n` : ""}
