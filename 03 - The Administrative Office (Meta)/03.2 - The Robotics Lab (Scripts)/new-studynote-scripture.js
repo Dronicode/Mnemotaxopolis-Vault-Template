@@ -1,23 +1,24 @@
 // --- Helper functions ---
 async function collectInputs(tp, args) {
+  console.log("starting: collectInputs");
   const input = {};
-  input.annotationType = await tp.system.suggester(
+  input.noteTier = await tp.system.suggester(
     ["verse", "chapter", "book", "volume"],
     ["verse", "chapter", "book", "volume"],
     "Is this note for verses, a chapter, a book, or a whole volume?"
   );
 
-  switch (input.annotationType) {
+  switch (input.noteTier) {
     case "verse":
     case "chapter":
     case "book":
     case "volume":
       input.volume = args.volume ?? (await tp.user["prompt-from-dict"](tp, "volumes-and-books"));
       input.volumeShort = await tp.user["prompt-from-dict"](tp, "volumes-shortened", input.volume);
-      if (input.annotationType === "volume") break;
+      if (input.noteTier === "volume") break;
 
       input.book = await tp.user["prompt-from-dict"](tp, "volumes-and-books", input.volume);
-      if (input.annotationType === "book") break;
+      if (input.noteTier === "book") break;
 
       if (await tp.user["exists-in-datafile"](tp, "named-chapters", input.book)) {
         input.chapter = await tp.user["prompt-from-dict"](tp, "named-chapters", input.book);
@@ -29,7 +30,7 @@ async function collectInputs(tp, args) {
           else input.chapter = await tp.system.prompt("Chapter number");
         } while (!input.chapter || !/^\d+$/.test(input.chapter));
       }
-      if (input.annotationType === "chapter") break;
+      if (input.noteTier === "chapter") break;
 
       do {
         if (await tp.user["exists-in-datafile"](tp, "has-paragraphs", input.book)) {
@@ -50,14 +51,15 @@ async function collectInputs(tp, args) {
   return input;
 }
 function addHierarchyTag(input) {
+  console.log("starting: addHierarchyTag");
   let tags = [...input.tags];
   let hierarchyTag = ["scripture", input.volume];
-  if (input.annotationType !== "volume") {
+  if (input.noteTier !== "volume") {
     if (input.book === "D&C") hierarchyTag.push("DandC");
     else hierarchyTag.push(input.book);
   }
-  if (input.annotationType === "chapter" || input.annotationType === "verse") hierarchyTag.push(input.chapter);
-  tags.push(
+  if (input.noteTier === "chapter" || input.noteTier === "verse") hierarchyTag.push(input.chapter);
+  return [
     hierarchyTag
       .filter(Boolean)
       .map((t) =>
@@ -66,13 +68,13 @@ function addHierarchyTag(input) {
           .replace(/\s+/g, "_")
           .replace(/[^\w_]/g, "")
       )
-      .join("/")
-  );
-  return tags;
+      .join("/"),
+  ];
 }
 async function buildFilename(tp, input, now) {
+  console.log("starting: buildFilename");
   let filename;
-  switch (input.annotationType) {
+  switch (input.noteTier) {
     case "volume":
       filename = input.volumeShort;
       break;
@@ -108,50 +110,51 @@ async function buildFilename(tp, input, now) {
 
   return filename + " [" + now.replace(":", "·") + "]";
 }
-async function resolveParentNote(tp, input) {
-  const frontmatterFields = {};
-  switch (input.annotationType) {
-    case "volume":
-      frontmatterFields.parentNoteName = input.volume;
-      frontmatterFields.volumeField = `[[${frontmatterFields.parentNoteName}]]`;
-
-      break;
-    case "book": // TODO studybook linked to volume but should link to literaturebook
-      frontmatterFields.parentNoteName = input.volume;
-      frontmatterFields.volumeField = input.volume;
-      frontmatterFields.bookField = `[[${frontmatterFields.parentNoteName}|${input.book}]]`;
-      break;
-    default:
-      frontmatterFields.volumeField = input.volume;
-      if (/^\d+$/.test(input.chapter) || !input.chapter) {
-        frontmatterFields.parentNoteName = `${input.volumeShort} - ${input.book}`;
-        frontmatterFields.bookField = `[[${frontmatterFields.parentNoteName}|${input.book}]]`;
-        frontmatterFields.chapterField = input.chapter;
-      } else {
-        frontmatterFields.parentNoteName = `${input.volumeShort} - ${input.chapter}`;
-        frontmatterFields.bookField = input.book;
-        frontmatterFields.chapterField = `[[${frontmatterFields.parentNoteName}|${input.chapter}]]`;
-      }
-      break;
+async function resolveParentNote(tp, input, noteType) {
+  console.log("starting: resolveParentNote");
+  if (input.noteTier === "volume") parentNoteName = input.volume;
+  else {
+    if (await tp.user["exists-in-datafile"](tp, "named-chapters", input.book)) {
+      parentNoteName = `${input.volumeShort} - ${input.chapter}`;
+    } else {
+      parentNoteName = `${input.volumeShort} - ${input.book}`;
+    }
   }
-  const parentNote = await tp.file.find_tfile(frontmatterFields.parentNoteName);
+  const parentNoteExists = await tp.file.find_tfile(parentNoteName);
 
-  if (parentNote) {
-    console.log(`Parent note found: ${parentNote.path}`);
-  } else {
-    console.log(`Parent note not found.: ${frontmatterFields.parentNoteName}\nCreating parent note.`);
-    await tp.user["new-literaturenote-scripture"](tp, { volume: input.volume, book: input.book });
+  if (parentNoteExists) console.log(`Parent note found: ${parentNoteExists.path}`);
+  else {
+    console.log(`Parent note not found.: ${parentNoteName}\nCreating parent note.`);
+    // await tp.user["new-literaturenote-scripture"](tp, {
+    //   childType: noteType,
+    //   childTier: input.noteTier,
+    //   volume: input.volume,
+    //   book: input.book,
+    //   chapter: input.chapter,
+    // });
+    console.log(`parent note created: ${parentNoteName}`);
   }
-  return frontmatterFields;
+  return parentNoteName;
 }
 
-function buildFrontmatter(now, input, tags, frontmatterFields) {
+async function buildFrontmatter(tp, now, input, tags, noteType, parentNoteName) {
+  console.log("starting: buildFrontmatter");
+  if (input.noteTier === "volume") input.volume = `[[${parentNoteName}]]`;
+  else if (input.noteTier === "book") input.book = `[[${parentNoteName}|${input.book}]]`;
+  else {
+    if (await tp.user["exists-in-datafile"](tp, "named-chapters", input.book)) {
+      input.chapter = `[[${parentNoteName}|${input.chapter}]]`;
+    } else {
+      input.chapter = `[[${parentNoteName}|${input.book}]]`;
+    }
+  }
+
   return `---
   date_created: "${now}"
-  note_type: studynote
-  volume: "${frontmatterFields.volumeField}"
-  ${input.book ? `book: "${frontmatterFields.bookField}"\n` : ""}
-  ${input.chapter ? `chapter: "${frontmatterFields.chapterField}"\n` : ""}
+  note_type: "${noteType}"
+  volume: "${input.volume}"
+  ${input.book ? `book: "${input.book}"\n` : ""}
+  ${input.chapter ? `chapter: "${input.chapter}"\n` : ""}
   ${input.verse ? `verse: "${input.verse}"\n` : ""}
   ${input.summary ? `summary: "${input.summary}"\n` : ""}
   ${tags.length ? `tags: [${tags.map((tag) => `"${tag}"`).join(", ")}]\n` : ""}
@@ -160,11 +163,13 @@ function buildFrontmatter(now, input, tags, frontmatterFields) {
 }
 
 module.exports = async (tp, args = {}) => {
+  console.log("starting: new-studynote-scripture");
+  const noteType = "studynote";
   const input = await collectInputs(tp, args);
   const tags = addHierarchyTag(input);
   const now = tp.date.now("YYYY-MM-DD HH:mm");
   const filename = await buildFilename(tp, input, now);
-  const frontmatterFields = await resolveParentNote(tp, input);
-  const frontmatter = buildFrontmatter(now, input, tags, frontmatterFields);
+  const parentNoteName = await resolveParentNote(tp, input, noteType);
+  const frontmatter = await buildFrontmatter(tp, now, input, tags, noteType, parentNoteName);
   await tp.user["create-note-with-frontmatter"]({ filename, frontmatter });
 };
