@@ -52,13 +52,12 @@ async function collectInputs(tp, args) {
 }
 function addHierarchyTag(input) {
   console.log("starting: addHierarchyTag");
-  let tags = [...input.tags];
   let hierarchyTag = ["scripture", input.volume];
   if (input.noteTier !== "volume") {
     if (input.book === "D&C") hierarchyTag.push("DandC");
     else hierarchyTag.push(input.book);
+    if (input.noteTier === "chapter" || input.noteTier === "verse") hierarchyTag.push(input.chapter);
   }
-  if (input.noteTier === "chapter" || input.noteTier === "verse") hierarchyTag.push(input.chapter);
   return [
     hierarchyTag
       .filter(Boolean)
@@ -79,31 +78,31 @@ async function buildFilename(tp, input, now) {
       filename = input.volumeShort;
       break;
     case "book":
-      if (input.book === "D&C") filename = input.volumeShort + " - Sections";
-      else filename = input.volumeShort + " - " + input.book;
+      if (input.book === "D&C") filename = `${input.volumeShort} - Sections`;
+      else filename = `${input.volumeShort} - ${input.book}`;
       break;
     case "chapter":
       if (input.book === "D&C") {
-        filename = input.volumeShort + " - Section " + input.chapter;
+        filename = `${input.volumeShort} - Section ${input.chapter}`;
       } else if (await tp.user["exists-in-datafile"](tp, "has-paragraphs", input.book)) {
-        filename = input.volumeShort + " - " + input.book;
+        filename = `${input.volumeShort} - ${input.book}`;
       } else if (await tp.user["exists-in-datafile"](tp, "named-chapters", input.book)) {
-        filename = input.volumeShort + " - " + input.chapter;
+        filename = `${input.volumeShort} - ${input.chapter}`;
       } else {
-        filename = input.volumeShort + " - " + input.book + " " + input.chapter;
+        filename = `${input.volumeShort} - ${input.book} ${input.chapter}`;
       }
       break;
     case "verse":
       if (input.book === "D&C") {
-        filename = input.volumeShort + " - Section " + input.chapter + "." + input.verse;
+        filename = `${input.volumeShort} - Section ${input.chapter}.${input.verse}`;
       } else if (await tp.user["exists-in-datafile"](tp, "has-paragraphs", input.book)) {
-        filename = input.volumeShort + " - " + input.book + " ¶" + input.verse;
+        filename = `${input.volumeShort} - ${input.book} ¶${input.verse}`;
       } else if (await tp.user["exists-in-datafile"](tp, "has-paragraphs", input.chapter)) {
-        filename = input.volumeShort + " - " + input.chapter + " ¶" + input.verse;
+        filename = `${input.volumeShort} - ${input.chapter} ¶${input.verse}`;
       } else if (await tp.user["exists-in-datafile"](tp, "named-chapters", input.book)) {
-        filename = input.volumeShort + " - " + input.chapter + "." + input.verse;
+        filename = `${input.volumeShort} - ${input.chapter}.${input.verse}`;
       } else {
-        filename = input.volumeShort + " - " + input.book + " " + input.chapter + "." + input.verse;
+        filename = `${input.volumeShort} - ${input.book} ${input.chapter}.${input.verse}`;
       }
       break;
   }
