@@ -1,19 +1,33 @@
 async function collectInputs(tp, args) {
-  console.log("starting: collectInputs");
+  console.log("starting: collectInputs...");
   const input = {};
+
+  console.log(`is!!!${args.book}!!!in nc?`);
+  if (await tp.user["exists-in-datafile"](tp, "named-chapters", args.book)) {
+    console.log("yes");
+  } else console.log("no");
 
   switch (args.childTier) {
     case "volume":
       input.noteTier = "volume";
-      console.log("child tier: ", args.childTier, " --- note tier: ", input.noteTier);
+      console.log("case volume.. child tier: ", args.childTier, " --- note tier: ", input.noteTier);
       break;
     case "book":
       input.noteTier = args.childType === "studynote" ? "book" : "volume";
-      console.log("child tier: ", args.childTier, " --- note tier: ", input.noteTier);
+      console.log("case book.. child tier: ", args.childTier, " --- note tier: ", input.noteTier);
       break;
     case "chapter":
-      input.noteTier = args.childType === "studynote" ? "chapter" : "book";
-      console.log("child tier: ", args.childTier, " --- note tier: ", input.noteTier);
+    case "verse":
+      if (await tp.user["exists-in-datafile"](tp, "named-chapters", args.book)) {
+        //TODO the lit note was self replicating at the same tier from verse, it needs logic to step up to next tier.
+        // test if below change will fix it.
+        input.noteTier = args.childType === "studynote" ? "chapter" : "book";
+        input.noteTier = "chapter";
+        console.log("case other, exists in nc.. child tier: ", args.childTier, " --- note tier: ", input.noteTier);
+      } else {
+        input.noteTier = "book";
+        console.log("case other, not in nc.. child tier: ", args.childTier, " --- note tier: ", input.noteTier);
+      }
       break;
     default:
       input.noteTier = await tp.system.suggester(
@@ -35,13 +49,15 @@ async function collectInputs(tp, args) {
 
       input.book = args.book ?? (await tp.user["prompt-from-dict"](tp, "volumes-and-books", input.volume));
       console.log("setting book: ", input.book);
-      if (input.noteTier === "chapter" && (await tp.user["exists-in-datafile"](tp, "has-paragraphs", input.book))) {
-        // Books with paragraphs have no chapters. If the note was for a chapter, set it to book instead.
-        input.noteTier = "book";
-      }
       if (input.noteTier === "book") break;
 
-      if (await tp.user["exists-in-datafile"](tp, "named-chapters", input.book)) {
+      // Books with paragraphs have no chapters. If the note was for a chapter, set it to book instead.
+      if (await tp.user["exists-in-datafile"](tp, "has-paragraphs", input.book))
+        if (input.noteTier === "chapter") {
+          input.noteTier = "book";
+          break;
+        } else input.chapter = 1;
+      else if (await tp.user["exists-in-datafile"](tp, "named-chapters", input.book)) {
         input.chapter = args.chapter ?? (await tp.user["prompt-from-dict"](tp, "named-chapters", input.book));
       } else {
         do {
@@ -101,17 +117,12 @@ function getParentNoteName(input) {
 
 function buildFrontmatter(input, tags, noteType, parentNoteName) {
   console.log("starting: buildFrontmatter with input ", input, " and type ", noteType, " and parent ", parentNoteName);
-  let volume;
-  let book;
+  let volume = input.volume ?? "";
+  let book = input.book ?? "";
   const chapter = input.chapter ?? "";
 
-  if (input.noteTier === "chapter") {
-    volume = input.volume ?? "";
-    book = `[[${parentNoteName}|${input.book}]]`;
-  } else {
-    volume = `[[${parentNoteName}]]`;
-    book = input.book ?? "";
-  }
+  if (input.noteTier === "chapter") book = `[[${parentNoteName}|${input.book}]]`;
+  else volume = `[[${parentNoteName}]]`;
 
   return `---
   note_type: "${noteType}"
@@ -136,6 +147,7 @@ async function createParentNote(tp, parentNoteName, input, noteType) {
       book: input.book,
       chapter: input.chapter,
     });
+    console.log(`parent note created: ${parentNoteName}`);
   }
 }
 

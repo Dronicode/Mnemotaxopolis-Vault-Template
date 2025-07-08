@@ -20,10 +20,14 @@ async function collectInputs(tp, args) {
       input.book = await tp.user["prompt-from-dict"](tp, "volumes-and-books", input.volume);
       if (input.noteTier === "book") break;
 
-      if (await tp.user["exists-in-datafile"](tp, "named-chapters", input.book)) {
+      // Books with paragraphs have no chapters. If the note was for a chapter, set it to book instead.
+      if (await tp.user["exists-in-datafile"](tp, "has-paragraphs", input.book))
+        if (input.noteTier === "chapter") {
+          input.noteTier = "book";
+          break;
+        } else input.chapter = 1;
+      else if (await tp.user["exists-in-datafile"](tp, "named-chapters", input.book)) {
         input.chapter = await tp.user["prompt-from-dict"](tp, "named-chapters", input.book);
-      } else if (await tp.user["exists-in-datafile"](tp, "has-paragraphs", input.book)) {
-        // Do nothing; Books with paragraphs have no chapters.
       } else {
         do {
           if (input.volumeShort === "D&C") input.chapter = await tp.system.prompt("Section number");
@@ -33,7 +37,10 @@ async function collectInputs(tp, args) {
       if (input.noteTier === "chapter") break;
 
       do {
-        if (await tp.user["exists-in-datafile"](tp, "has-paragraphs", input.book)) {
+        if (
+          (await tp.user["exists-in-datafile"](tp, "has-paragraphs", input.book)) ||
+          (await tp.user["exists-in-datafile"](tp, "has-paragraphs", input.chapter))
+        ) {
           input.verse = await tp.system.prompt("Paragraph(s) (e.g. 2, 3-5, 1,3,7-9)");
         } else {
           input.verse = await tp.system.prompt("Verse(s) (e.g. 2, 3-5, 1,3,7-9)");
@@ -109,66 +116,69 @@ async function buildFilename(tp, input, now) {
 
   return filename + " [" + now.replace(":", "·") + "]";
 }
-async function resolveParentNote(tp, input, noteType) {
-  console.log("starting: resolveParentNote");
-  if (input.noteTier === "volume") parentNoteName = input.volume;
-  else {
-    if (await tp.user["exists-in-datafile"](tp, "named-chapters", input.book)) {
-      parentNoteName = `${input.volumeShort} - ${input.chapter}`;
-    } else {
-      parentNoteName = `${input.volumeShort} - ${input.book}`;
-    }
-  }
-  const parentNoteExists = await tp.file.find_tfile(parentNoteName);
-
-  if (parentNoteExists) console.log(`Parent note found: ${parentNoteExists.path}`);
-  else {
-    console.log(`Parent note not found.: ${parentNoteName}\nCreating parent note.`);
-    // await tp.user["new-literaturenote-scripture"](tp, {
-    //   childType: noteType,
-    //   childTier: input.noteTier,
-    //   volume: input.volume,
-    //   book: input.book,
-    //   chapter: input.chapter,
-    // });
-    console.log(`parent note created: ${parentNoteName}`);
-  }
-  return parentNoteName;
+async function getParentNoteName(tp, input) {
+  console.log("starting: getParentNoteName with tier ", input.noteTier);
+  if (input.noteTier === "volume") return input.volume;
+  else if (input.noteTier != "book" && (await tp.user["exists-in-datafile"](tp, "named-chapters", input.book)))
+    return `${input.volumeShort} - ${input.chapter}`;
+  else return `${input.volumeShort} - ${input.book}`;
 }
 
 async function buildFrontmatter(tp, now, input, tags, noteType, parentNoteName) {
-  console.log("starting: buildFrontmatter");
-  if (input.noteTier === "volume") input.volume = `[[${parentNoteName}]]`;
-  else if (input.noteTier === "book") input.book = `[[${parentNoteName}|${input.book}]]`;
-  else {
-    if (await tp.user["exists-in-datafile"](tp, "named-chapters", input.book)) {
-      input.chapter = `[[${parentNoteName}|${input.chapter}]]`;
-    } else {
-      input.chapter = `[[${parentNoteName}|${input.book}]]`;
-    }
-  }
+  console.log("starting: buildFrontmatter with inputs: ", input);
+  let volume = input.volume ?? "";
+  let book = input.book ?? "";
+  let chapter = input.chapter ?? "";
+  let verse = input.verse ?? "";
+
+  if (input.noteTier === "volume") volume = `[[${parentNoteName}]]`;
+  else if (input.noteTier != "book" && (await tp.user["exists-in-datafile"](tp, "named-chapters", input.book))) {
+    console.log("input.noteTier - ", input.noteTier);
+    chapter = `[[${parentNoteName}|${input.chapter}]]`;
+  } else book = `[[${parentNoteName}|${input.book}]]`;
 
   return `---
   date_created: "${now}"
   note_type: "${noteType}"
-  volume: "${input.volume}"
-  ${input.book ? `book: "${input.book}"\n` : ""}
-  ${input.chapter ? `chapter: "${input.chapter}"\n` : ""}
-  ${input.verse ? `verse: "${input.verse}"\n` : ""}
-  ${input.summary ? `summary: "${input.summary}"\n` : ""}
-  ${tags.length ? `tags: [${tags.map((tag) => `"${tag}"`).join(", ")}]\n` : ""}
+  volume: "${volume}"
+  ${book ? `book: "${book}"` : ""}
+  ${chapter ? `chapter: "${chapter}"` : ""}
+  ${verse ? `verse: "${verse}"` : ""}
+  ${input.summary ? `summary: "${input.summary}"` : ""}
+  ${tags.length ? `tags: [${tags.map((tag) => `"${tag}"`).join(", ")}]` : ""}
 ---
   `;
+}
+
+async function createParentNote(tp, parentNoteName, input, noteType) {
+  console.log(`Searching for: ${parentNoteName}`);
+  const parentNoteExists = await tp.file.find_tfile(parentNoteName);
+  if (parentNoteExists) console.log(`Parent note found: ${parentNoteExists.path}`);
+  else {
+    console.log(`Parent note not found.: ${parentNoteName}\nCreating parent note.`);
+    await tp.user["new-literaturenote-scripture"](tp, {
+      childType: noteType,
+      childTier: input.noteTier,
+      volume: input.volume,
+      book: input.book,
+      chapter: input.chapter,
+    });
+    console.log(`parent note created: ${parentNoteName}`);
+  }
+  return parentNoteName;
 }
 
 module.exports = async (tp, args = {}) => {
   console.log("starting: new-studynote-scripture");
   const noteType = "studynote";
   const input = await collectInputs(tp, args);
+  console.log("inputs collected - ", input);
   const tags = addHierarchyTag(input);
   const now = tp.date.now("YYYY-MM-DD HH:mm");
   const filename = await buildFilename(tp, input, now);
-  const parentNoteName = await resolveParentNote(tp, input, noteType);
+  const parentNoteName = await getParentNoteName(tp, input);
   const frontmatter = await buildFrontmatter(tp, now, input, tags, noteType, parentNoteName);
+  console.log("frontmatter - ", frontmatter);
   await tp.user["create-note-with-frontmatter"]({ filename, frontmatter });
+  await createParentNote(tp, parentNoteName, input, noteType);
 };
