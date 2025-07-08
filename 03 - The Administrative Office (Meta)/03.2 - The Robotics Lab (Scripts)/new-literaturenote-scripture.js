@@ -2,11 +2,6 @@ async function collectInputs(tp, args) {
   console.log("starting: collectInputs...");
   const input = {};
 
-  console.log(`is!!!${args.book}!!!in nc?`);
-  if (await tp.user["exists-in-datafile"](tp, "named-chapters", args.book)) {
-    console.log("yes");
-  } else console.log("no");
-
   switch (args.childTier) {
     case "volume":
       input.noteTier = "volume";
@@ -18,16 +13,15 @@ async function collectInputs(tp, args) {
       break;
     case "chapter":
     case "verse":
-      if (await tp.user["exists-in-datafile"](tp, "named-chapters", args.book)) {
-        //TODO the lit note was self replicating at the same tier from verse, it needs logic to step up to next tier.
-        // test if below change will fix it.
-        input.noteTier = args.childType === "studynote" ? "chapter" : "book";
-        input.noteTier = "chapter";
-        console.log("case other, exists in nc.. child tier: ", args.childTier, " --- note tier: ", input.noteTier);
-      } else {
-        input.noteTier = "book";
-        console.log("case other, not in nc.. child tier: ", args.childTier, " --- note tier: ", input.noteTier);
-      }
+      // TEST
+      input.noteTier = args.childType === "studynote" ? "chapter" : "book";
+      // if (await tp.user["exists-in-datafile"](tp, "named-chapters", args.book)) {
+      //   input.noteTier = args.childType === "studynote" ? "chapter" : "book";
+      //   console.log("case other, exists in nc.. child tier: ", args.childTier, " --- note tier: ", input.noteTier);
+      // } else {
+      //   input.noteTier = "book";
+      //   console.log("case other, not in nc.. child tier: ", args.childTier, " --- note tier: ", input.noteTier);
+      // }
       break;
     default:
       input.noteTier = await tp.system.suggester(
@@ -124,14 +118,17 @@ function buildFrontmatter(input, tags, noteType, parentNoteName) {
   if (input.noteTier === "chapter") book = `[[${parentNoteName}|${input.book}]]`;
   else volume = `[[${parentNoteName}]]`;
 
-  return `---
-  note_type: "${noteType}"
-  volume: "${volume}"
-  ${book ? `book: "${book}"\n` : ""}
-  ${chapter ? `chapter : "${chapter}"\n` : ""}
-  ${tags.length ? `tags: [${tags.map((tag) => `"${tag}"`).join(", ")}]\n` : ""}
----
-`;
+  const frontmatterLines = [
+    "---",
+    `note_type: "${noteType}"`,
+    `volume: "${volume}"`,
+    book ? `book: "${book}"` : null,
+    chapter ? `chapter: "${chapter}"` : null,
+    tags.length ? `tags: [${tags.map((tag) => `"${tag}"`).join(", ")}]` : null,
+    "---",
+  ];
+
+  return frontmatterLines.filter(Boolean).join("\n");
 }
 
 async function createParentNote(tp, parentNoteName, input, noteType) {
