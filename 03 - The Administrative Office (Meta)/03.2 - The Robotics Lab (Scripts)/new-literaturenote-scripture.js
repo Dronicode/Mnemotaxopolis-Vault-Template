@@ -93,8 +93,12 @@ async function buildFilename(tp, input) {
       return input.volume;
     case "book":
       if (input.book === "D&C") return `${input.volumeShort} - Sections`;
-      else return `${input.volumeShort} - ${input.book}`;
+      else {
+        console.log("test output");
+        return `${input.volumeShort} - ${input.book}`;
+      }
     case "chapter":
+      if (input.book === "D&C") return `${input.volumeShort} - Section ${input.chapter}`;
       if (await tp.user["exists-in-datafile"](tp, "named-chapters", input.book)) {
         return `${input.volumeShort} - ${input.chapter}`;
       } else return `${input.volumeShort} - ${input.book} ${input.chapter}`;
@@ -105,6 +109,7 @@ function getParentNoteName(input) {
   console.log("starting: getParentNoteName with tier ", input.noteTier);
   if (input.noteTier === "volume") return `MoC ${input.volume}`;
   else if (input.noteTier === "book") return input.volume;
+  else if (input.book === "D&C") return `${input.volumeShort} - Sections`;
   else if (input.noteTier === "chapter") return `${input.volumeShort} - ${input.book}`;
   console.log("ERROR: getParentNoteName failed");
 }

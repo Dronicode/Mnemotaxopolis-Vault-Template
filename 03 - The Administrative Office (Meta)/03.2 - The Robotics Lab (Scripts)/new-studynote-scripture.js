@@ -62,7 +62,7 @@ function addHierarchyTag(input) {
   let hierarchyTag = ["scripture", input.volume];
   console.log("hierarchyTag ", hierarchyTag);
   if (input.noteTier !== "volume") {
-    if (input.book === "D&C") hierarchyTag.push("DandC");
+    if (input.book === "D&C") hierarchyTag.push("Sections");
     else hierarchyTag.push(input.book);
     if (input.noteTier === "chapter" || input.noteTier === "verse") hierarchyTag.push(input.chapter);
   }
@@ -118,25 +118,21 @@ async function buildFilename(tp, input, now) {
 
   return filename + " [" + now.replace(":", "·") + "]";
 }
-function getParentNoteName(input) {
-  //TEST
+
+async function getParentNoteName(tp, input) {
   console.log("starting: getParentNoteName with tier ", input.noteTier);
   if (input.noteTier === "volume") return input.volume;
-  else if (input.noteTier === "book") return `${input.volumeShort} - ${input.book}`;
+  else if (input.book === "D&C") {
+    if (input.noteTier === "book") return `${input.volumeShort} - Sections`;
+    else return `${input.volumeShort} - Section ${input.chapter}`;
+  } else if (input.noteTier === "book") return `${input.volumeShort} - ${input.book}`;
+  else if (input.noteTier === "verse" && (await tp.user["exists-in-datafile"](tp, "has-paragraphs", input.book)))
+    return `${input.volumeShort} - ${input.book}`;
   else if (/^\d+$/.test(input.chapter)) return `${input.volumeShort} - ${input.book} ${input.chapter}`;
   else return `${input.volumeShort} - ${input.chapter}`;
 }
-// async function getParentNoteName(tp, input) {
-//   console.log("starting: getParentNoteName with tier ", input.noteTier);
-//   if (input.noteTier === "volume") return input.volume;
-//   else if (input.noteTier != "book" && (await tp.user["exists-in-datafile"](tp, "named-chapters", input.book)))
-//     return `${input.volumeShort} - ${input.chapter}`;
-//   else return `${input.volumeShort} - ${input.book}`;
-// }
 
-function buildFrontmatter(now, input, tags, noteType, parentNoteName) {
-  //TEST
-  // async function buildFrontmatter(tp, now, input, tags, noteType, parentNoteName) {
+async function buildFrontmatter(tp, now, input, tags, noteType, parentNoteName) {
   // TODO handle cases with no chapters, like "[[BoM - Reference Guide to the Book of Mormon 1|1]]"
   console.log("starting: buildFrontmatter with inputs: ", input);
   let volume = input.volume ?? "";
@@ -144,14 +140,10 @@ function buildFrontmatter(now, input, tags, noteType, parentNoteName) {
   let chapter = input.chapter ?? "";
   let verse = input.verse ?? "";
 
-  // if (input.noteTier === "volume") volume = `[[${parentNoteName}]]`;
-  // else if (input.noteTier != "book" && (await tp.user["exists-in-datafile"](tp, "named-chapters", input.book))) {
-  //   console.log("input.noteTier - ", input.noteTier);
-  //   chapter = `[[${parentNoteName}|${input.chapter}]]`;
-  // } else book = `[[${parentNoteName}|${input.book}]]`;
-  //TEST
   if (input.noteTier === "volume") volume = `[[${parentNoteName}]]`;
   else if (input.noteTier === "book") book = `[[${parentNoteName}|${input.book}]]`;
+  else if (input.noteTier === "verse" && (await tp.user["exists-in-datafile"](tp, "has-paragraphs", input.book)))
+    book = `[[${parentNoteName}|${input.book}]]`;
   else chapter = `[[${parentNoteName}|${input.chapter}]]`;
 
   const frontmatterLines = [
@@ -168,19 +160,6 @@ function buildFrontmatter(now, input, tags, noteType, parentNoteName) {
   ];
 
   return frontmatterLines.filter(Boolean).join("\n");
-
-  // TEST
-  //   return `---
-  //   date_created: "${now}"
-  //   note_type: "${noteType}"
-  //   volume: "${volume}"
-  //   ${book ? `book: "${book}"` : ""}
-  //   ${chapter ? `chapter: "${chapter}"` : ""}
-  //   ${verse ? `verse: "${verse}"` : ""}
-  //   ${input.summary ? `summary: "${input.summary}"` : ""}
-  //   ${tags.length ? `tags: [${tags.map((tag) => `"${tag}"`).join(", ")}]` : ""}
-  // ---
-  //   `;
 }
 
 async function createParentNote(tp, parentNoteName, input, noteType) {
@@ -209,10 +188,8 @@ module.exports = async (tp, args = {}) => {
   const tags = addHierarchyTag(input);
   const now = tp.date.now("YYYY-MM-DD HH:mm");
   const filename = await buildFilename(tp, input, now);
-  // const parentNoteName = await getParentNoteName(tp, input);
-  const parentNoteName = getParentNoteName(input); //TEST
-  const frontmatter = buildFrontmatter(now, input, tags, noteType, parentNoteName); //TEST
-  // const frontmatter = await buildFrontmatter(tp, now, input, tags, noteType, parentNoteName);
+  const parentNoteName = await getParentNoteName(tp, input);
+  const frontmatter = await buildFrontmatter(tp, now, input, tags, noteType, parentNoteName);
   console.log("frontmatter - ", frontmatter);
   await tp.user["create-note-with-frontmatter"]({ filename, frontmatter });
   await createParentNote(tp, parentNoteName, input, noteType);
