@@ -1,27 +1,16 @@
 async function collectInputs(tp, args) {
-  console.log("starting: collectInputs...");
   const input = {};
 
   switch (args.childTier) {
     case "volume":
       input.noteTier = "volume";
-      console.log("case volume.. child tier: ", args.childTier, " --- note tier: ", input.noteTier);
       break;
     case "book":
       input.noteTier = args.childType === "studynote" ? "book" : "volume";
-      console.log("case book.. child tier: ", args.childTier, " --- note tier: ", input.noteTier);
       break;
     case "chapter":
     case "verse":
-      // TEST
       input.noteTier = args.childType === "studynote" ? "chapter" : "book";
-      // if (await tp.user["exists-in-datafile"](tp, "named-chapters", args.book)) {
-      //   input.noteTier = args.childType === "studynote" ? "chapter" : "book";
-      //   console.log("case other, exists in nc.. child tier: ", args.childTier, " --- note tier: ", input.noteTier);
-      // } else {
-      //   input.noteTier = "book";
-      //   console.log("case other, not in nc.. child tier: ", args.childTier, " --- note tier: ", input.noteTier);
-      // }
       break;
     default:
       input.noteTier = await tp.system.suggester(
@@ -29,7 +18,6 @@ async function collectInputs(tp, args) {
         ["chapter", "book", "volume"],
         "Is this note for a specific chapter, book, or a whole volume?"
       );
-      console.log("child tier: ", args.childTier, " --- note tier: ", input.noteTier);
       break;
   }
   switch (input.noteTier) {
@@ -38,14 +26,11 @@ async function collectInputs(tp, args) {
     case "volume":
       input.volume = args.volume ?? (await tp.user["prompt-from-dict"](tp, "volumes-and-books"));
       input.volumeShort = await tp.user["prompt-from-dict"](tp, "volumes-shortened", input.volume);
-      console.log("setting volume: ", input.volume);
       if (input.noteTier === "volume") break;
 
       input.book = args.book ?? (await tp.user["prompt-from-dict"](tp, "volumes-and-books", input.volume));
-      console.log("setting book: ", input.book);
       if (input.noteTier === "book") break;
 
-      // Books with paragraphs have no chapters. If the note was for a chapter, set it to book instead.
       if (await tp.user["exists-in-datafile"](tp, "has-paragraphs", input.book))
         if (input.noteTier === "chapter") {
           input.noteTier = "book";
@@ -60,13 +45,11 @@ async function collectInputs(tp, args) {
           else input.chapter = await tp.system.prompt("Chapter number");
         } while (!input.chapter || !/^\d+$/.test(input.chapter));
       }
-      console.log("setting chapter: ", input.chapter);
   }
   return input;
 }
 
 function addHierarchyTag(input) {
-  console.log("starting: addHierarchyTag");
   let hierarchyTag = ["scripture", input.volume];
   if (input.noteTier !== "volume") {
     if (input.book === "D&C") hierarchyTag.push("DandC");
@@ -87,14 +70,12 @@ function addHierarchyTag(input) {
 }
 
 async function buildFilename(tp, input) {
-  console.log("starting: buildFilename");
   switch (input.noteTier) {
     case "volume":
       return input.volume;
     case "book":
       if (input.book === "D&C") return `${input.volumeShort} - Sections`;
       else {
-        console.log("test output");
         return `${input.volumeShort} - ${input.book}`;
       }
     case "chapter":
@@ -106,16 +87,13 @@ async function buildFilename(tp, input) {
 }
 
 function getParentNoteName(input) {
-  console.log("starting: getParentNoteName with tier ", input.noteTier);
   if (input.noteTier === "volume") return `MoC ${input.volume}`;
   else if (input.noteTier === "book") return input.volume;
   else if (input.book === "D&C") return `${input.volumeShort} - Sections`;
   else if (input.noteTier === "chapter") return `${input.volumeShort} - ${input.book}`;
-  console.log("ERROR: getParentNoteName failed");
 }
 
 function buildFrontmatter(input, tags, noteType, parentNoteName) {
-  console.log("starting: buildFrontmatter with input ", input, " and type ", noteType, " and parent ", parentNoteName);
   let volume = input.volume ?? "";
   let book = input.book ?? "";
   const chapter = input.chapter ?? "";
@@ -137,11 +115,9 @@ function buildFrontmatter(input, tags, noteType, parentNoteName) {
 }
 
 async function createParentNote(tp, parentNoteName, input, noteType) {
-  console.log(`Searching for: ${parentNoteName}`);
   const parentNoteExists = await tp.file.find_tfile(parentNoteName);
   if (parentNoteExists) console.log(`Parent note found: ${parentNoteExists.path}`);
   else {
-    console.log(`Parent note not found.: ${parentNoteName}\nCreating parent note.`);
     await tp.user["new-literaturenote-scripture"](tp, {
       childType: noteType,
       childTier: input.noteTier,
@@ -149,21 +125,17 @@ async function createParentNote(tp, parentNoteName, input, noteType) {
       book: input.book,
       chapter: input.chapter,
     });
-    console.log(`parent note created: ${parentNoteName}`);
   }
 }
 
 module.exports = async (tp, args = {}) => {
-  console.log("starting: new-literaturenote-scripture with args:", args);
-  const noteType = "literaturenote";
+  const noteType = "literature";
   const input = await collectInputs(tp, args);
   const tags = addHierarchyTag(input);
   const filename = await buildFilename(tp, input);
   const parentNoteName = getParentNoteName(input);
   const frontmatter = buildFrontmatter(input, tags, noteType, parentNoteName);
-  console.log("frontmatter - ", frontmatter);
-
   const body = args.body ?? "";
-  await tp.user["create-note-with-frontmatter"]({ filename, frontmatter, body });
+  await tp.user["create-note-with-frontmatter"]({ noteType, filename, frontmatter, body });
   await createParentNote(tp, parentNoteName, input, noteType);
 };

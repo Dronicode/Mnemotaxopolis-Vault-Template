@@ -1,6 +1,4 @@
-// --- Helper functions ---
 async function collectInputs(tp, args) {
-  console.log("starting: collectInputs");
   const input = {};
   input.noteTier = await tp.system.suggester(
     ["verse", "chapter", "book", "volume"],
@@ -58,15 +56,12 @@ async function collectInputs(tp, args) {
   return input;
 }
 function addHierarchyTag(input) {
-  console.log("starting: addHierarchyTag with input ", input);
   let hierarchyTag = ["scripture", input.volume];
-  console.log("hierarchyTag ", hierarchyTag);
   if (input.noteTier !== "volume") {
     if (input.book === "D&C") hierarchyTag.push("Sections");
     else hierarchyTag.push(input.book);
     if (input.noteTier === "chapter" || input.noteTier === "verse") hierarchyTag.push(input.chapter);
   }
-  console.log("hierarchyTag ", hierarchyTag);
   return [
     hierarchyTag
       .filter(Boolean)
@@ -120,7 +115,6 @@ async function buildFilename(tp, input, now) {
 }
 
 async function getParentNoteName(tp, input) {
-  console.log("starting: getParentNoteName with tier ", input.noteTier);
   if (input.noteTier === "volume") return input.volume;
   else if (input.book === "D&C") {
     if (input.noteTier === "book") return `${input.volumeShort} - Sections`;
@@ -134,7 +128,6 @@ async function getParentNoteName(tp, input) {
 
 async function buildFrontmatter(tp, now, input, tags, noteType, parentNoteName) {
   // TODO handle cases with no chapters, like "[[BoM - Reference Guide to the Book of Mormon 1|1]]"
-  console.log("starting: buildFrontmatter with inputs: ", input);
   let volume = input.volume ?? "";
   let book = input.book ?? "";
   let chapter = input.chapter ?? "";
@@ -163,11 +156,9 @@ async function buildFrontmatter(tp, now, input, tags, noteType, parentNoteName) 
 }
 
 async function createParentNote(tp, parentNoteName, input, noteType) {
-  console.log(`Searching for: ${parentNoteName}`);
   const parentNoteExists = await tp.file.find_tfile(parentNoteName);
   if (parentNoteExists) console.log(`Parent note found: ${parentNoteExists.path}`);
   else {
-    console.log(`Parent note not found.: ${parentNoteName}\nCreating parent note.`);
     await tp.user["new-literaturenote-scripture"](tp, {
       childType: noteType,
       childTier: input.noteTier,
@@ -175,22 +166,18 @@ async function createParentNote(tp, parentNoteName, input, noteType) {
       book: input.book,
       chapter: input.chapter,
     });
-    console.log(`parent note created: ${parentNoteName}`);
   }
   return parentNoteName;
 }
 
 module.exports = async (tp, args = {}) => {
-  console.log("starting: new-studynote-scripture");
   const noteType = "studynote";
   const input = await collectInputs(tp, args);
-  console.log("inputs collected - ", input);
   const tags = addHierarchyTag(input);
   const now = tp.date.now("YYYY-MM-DD HH:mm");
   const filename = await buildFilename(tp, input, now);
   const parentNoteName = await getParentNoteName(tp, input);
   const frontmatter = await buildFrontmatter(tp, now, input, tags, noteType, parentNoteName);
-  console.log("frontmatter - ", frontmatter);
-  await tp.user["create-note-with-frontmatter"]({ filename, frontmatter });
+  await tp.user["create-note-with-frontmatter"]({ noteType, filename, frontmatter });
   await createParentNote(tp, parentNoteName, input, noteType);
 };
