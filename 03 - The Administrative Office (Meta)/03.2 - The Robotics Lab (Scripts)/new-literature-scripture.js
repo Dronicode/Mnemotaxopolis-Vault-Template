@@ -98,11 +98,9 @@ function buildFrontmatter(input, tags, noteType, parentNoteName) {
   let book = input.book ?? "";
   const chapter = input.chapter ?? "";
 
-  if (input.noteTier === "chapter") book = `[[${parentNoteName}|${input.book}]]`;
-  else volume = `[[${parentNoteName}]]`;
-
   const frontmatterLines = [
     "---",
+    `parent: "[[${parentNoteName}]]"`,
     `note_type: "${noteType}"`,
     `volume: "${volume}"`,
     book ? `book: "${book}"` : null,
@@ -118,7 +116,7 @@ async function createParentNote(tp, parentNoteName, input, noteType) {
   const parentNoteExists = await tp.file.find_tfile(parentNoteName);
   if (parentNoteExists) console.log(`Parent note found: ${parentNoteExists.path}`);
   else {
-    await tp.user["new-literaturenote-scripture"](tp, {
+    await tp.user["new-literature-scripture"](tp, {
       childType: noteType,
       childTier: input.noteTier,
       volume: input.volume,

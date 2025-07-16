@@ -22,7 +22,7 @@ actions:
 ```
 ## View existing notes
 ```dataviewjs
-const canon = "Doctrine and Covenants";
+const volume = "Doctrine and Covenants";
 const bookOrder = [
   "Introduction", "Chronological order of Contents", "Section"
 ];
@@ -32,7 +32,7 @@ const chapter = dv.current().selected_chapter;
 // Book Picker
 dv.header(3, "📘 Select a Book");
 const books = dv.pages('"TESTS"')
-  .where(p => p.canon === canon && p.book)
+  .where(p => p.volume === volume && p.book)
   .map(p => p.book);
 const uniqueBooks = [...new Set(books)];
 const sortedBooks = bookOrder.filter(b => uniqueBooks.includes(b));

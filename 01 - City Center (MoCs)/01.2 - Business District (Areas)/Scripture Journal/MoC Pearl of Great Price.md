@@ -22,13 +22,13 @@ actions:
 ```
 ## View existing notes
 ```dataviewjs
-const canon = "Pearl of Great Price";
+const volume = "Pearl of Great Price";
 const book = dv.current().selected_book;
 const chapter = dv.current().selected_chapter;
 
 // Book Picker
 const books = dv.pages('"TESTS"')
-  .where(p => p.canon === canon && p.book)
+  .where(p => p.volume === volume && p.book)
   .map(p => p.book);
 
 const uniqueBooks = [...new Set(books)].sort();
