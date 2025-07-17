@@ -71,7 +71,7 @@ const allPages = dv
   .pages(`"${searchdir}"`)
   .where(p => p.volume === volume)
   .array();
-  
+   
 // -------------------- notetype dropdown
 const types = Array.from(
   new Set(
@@ -189,7 +189,8 @@ dv.table(
   ["Reference", "Date", "Summary"],
   pages.map(p => [
     dv.fileLink(p.file.path),
-    p.date_created ?? p.file.ctime,
+    //p.date_created ?? p.file.ctime,
+    p.file.ctime,
     p.summary ?? ""
   ])
 );
