@@ -121,7 +121,7 @@ City Map (Top-level-index)
 02.1.4 - The Industrial Zone (Collective Exterior)  
 02.2 - The Transit Hub (Temporary)  
 03 - The Administrative Office (Meta)  
-03.1 - The Reception (User Guides)
-03.2 - The Blueprint Archive (Templates)
+03.1 - The Reception (User Guides)  
+03.2 - The Blueprint Archive (Templates)  
 
 ### Templates
