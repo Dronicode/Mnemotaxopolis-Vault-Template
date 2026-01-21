@@ -50,7 +50,7 @@ Mnemotaxopolis combines each of these methodologies to address many of their wea
 
 At the top level there are two folders, one dedicated to MoCs, and one dedicated to content, with a third optional folder for the tool or software managing the PKM.
 
-01 - (MoCs)  
+01 - (Indexes)  
 01.1 - (Projects)  
 01.2 - (Areas)  
 01.3 - (Resources)  
@@ -64,11 +64,12 @@ At the top level there are two folders, one dedicated to MoCs, and one dedicated
 02.1.4 - (Collective Exterior)  
 02.2 - (Temporary)  
 03 - (Meta)  
-03.1 - (Templates)
+03.1 - (User Guides)
+03.2 - (Templates)
 
-#### The MoC folder
+#### The Indexes folder
 
-The MoC folder contains exclusively MoCs and indexes, and never any actual content. It contains one file, the top level index or 'map of maps' which can be used as a point of entry to find everything else. If organized and linked properly, there should be a path from here to every single note in the whole Mnemotaxopolis, and from each file back to here.
+The Indexes folder contains exclusively indexes of content, and never any actual content. These indexes might be standard indexes, bases, or MoCs. It contains one file, the top level index or 'map of maps' which can be used as a point of entry to find everything else. If organized and linked properly, there should be a path from here to every single note in the whole Mnemotaxopolis, and from each file back to here.
 
 All the rest of the MoCs are organized using the PARA methodology which is the first big change implemented in this system. By sorting indexes and MoCs with PARA rather than folders of notes, it creates a level of abstraction which solves most of that system's weaknesses. It is easier to maintain a comprehensive project folder referencing all relevant notes, and notes can be easily linked to multiple projects or areas thanks to the use of linking and references. PARA's 'archive' folder has been replaced with a 'completed' folder. Only completed items from Projects or Areas are moved here for the purpose of decluttering, but there is no reason to ever archive a resource item with no deadline.
 
@@ -106,7 +107,7 @@ The contents of this folder are unrelated to the PKM itself but are for any supp
 
 Keeping with the theme that a Mnemotaxopolis is a city of the mind, each note is treated as a resident (or visitor) in the city, where folders are the various neighborhoods and structures where the residents live, and MoCs can be considered as part of the infrastructure which keeps everything connected and running smoothly. The folder structure previously laid out has been stylized accordingly.
 
-01 - City Center (MoCs)  
+01 - City Center (Indexes)  
 01.1 - Development Sites (Projects)  
 01.2 - Business District (Areas)  
 01.3 - Public Forum (Resources)  
@@ -120,6 +121,7 @@ City Map (Top-level-index)
 02.1.4 - The Industrial Zone (Collective Exterior)  
 02.2 - The Transit Hub (Temporary)  
 03 - The Administrative Office (Meta)  
-03.1 - The Blueprint Archive (Templates)
+03.1 - The Reception (User Guides)
+03.2 - The Blueprint Archive (Templates)
 
 ### Templates
