@@ -1,9 +1,12 @@
 <%*
-const app = tp.app;
 const file = tp.config.target_file;
+const status = String(tp.frontmatter.status ?? "").trim().toLowerCase();
 
-const pledged = (await tp.system.suggester(["false", "true"], [false, true], false, "Pledged?")) ?? false;
-await app.fileManager.processFrontMatter(file, (frontmatter) => {
+const pledged = status === "cancelled"
+    ? false
+    : ((await tp.system.suggester(["false", "true"], [false, true], false, "Pledged?")) ?? false);
+
+await tp.app.fileManager.processFrontMatter(file, (frontmatter) => {
     frontmatter.pledged = pledged;
 });
 
