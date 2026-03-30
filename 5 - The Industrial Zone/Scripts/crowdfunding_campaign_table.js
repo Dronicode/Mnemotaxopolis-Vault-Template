@@ -102,7 +102,7 @@ module.exports = async function crowdfunding_campaign_table(tp, pledged) {
     content = await app.vault.read(file);
 
     const tableMarkdown = `
-| Type       | Name       | Cost | Cost (CZK) |
+| Type       | Name       | Cost (${currency}) | Cost (CZK) |
 |------------|------------|------|------------|
 ${resultingRows.map((row) => `| ${row.type} | ${row.name} | ${row.cost.toFixed(2)} | ${row.costCzk.toFixed(2)} |`).join("\n")}
 | **total**  |            | ${total.toFixed(2)} | ${totalCzk.toFixed(2)} |

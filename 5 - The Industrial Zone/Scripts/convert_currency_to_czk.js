@@ -1,4 +1,4 @@
-const CACHE_FILE = "05 - The Administrative Office/The Robotics Lab (Scripts)/cache/currency_rates_to_czk.json";
+const CACHE_FILE = "05 - The Industrial Zone/Scripts/cache/currency_rates_to_czk.json";
 const CACHE_TTL_MS = 12 * 60 * 60 * 1000;
 
 let memoryCache = null;

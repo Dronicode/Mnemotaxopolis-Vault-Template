@@ -89,7 +89,7 @@ style: primary
 label: Update Status
 actions:
   - type: runTemplaterFile
-    templateFile: "05 - The Administrative Office/The Factory (Templates)/crowdfunding-campaign-status.md"
+    templateFile: "05 - The Industrial Zone/Templates/crowdfunding-campaign-status.md"
 ```
 
 ## Pledge Breakdown
@@ -98,7 +98,7 @@ style: primary
 label: Update Pledge
 actions:
   - type: runTemplaterFile
-    templateFile: "05 - The Administrative Office/The Factory (Templates)/crowdfunding-campaign-pledge.md"
+    templateFile: "05 - The Industrial Zone/Templates/crowdfunding-campaign-pledge.md"
 ```
 <%*
 tp.hooks.on_all_templates_executed(async () => {

@@ -4,3 +4,5 @@
 
 ![[Crowdfund Campaigns.base]]
 
+## Payment Schedule
+
