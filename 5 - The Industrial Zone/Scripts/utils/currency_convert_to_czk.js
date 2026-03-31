@@ -118,7 +118,11 @@ async function getRate(adapter, currency) {
     return rate;
 }
 
-module.exports = async function convert_currency_to_czk(tp, currency, value) {
+module.exports = async function convert_currency_to_czk(adapter, currency, value) {
+    if (!adapter) {
+        throw new Error("A vault adapter is required for currency conversion.");
+    }
+
     const normalizedCurrency = normalizeCurrency(currency);
     const numericValue = normalizeValue(value);
 
@@ -130,7 +134,6 @@ module.exports = async function convert_currency_to_czk(tp, currency, value) {
         return numericValue.toFixed(2);
     }
 
-    const adapter = tp.app.vault.adapter;
     const rate = await getRate(adapter, normalizedCurrency);
 
     return (numericValue * rate).toFixed(2);

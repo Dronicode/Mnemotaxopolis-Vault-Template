@@ -1,8 +1,11 @@
+const normalize = require("../utils/normalize_value.js");
+const convertCurrencyToCzk = require("../utils/currency_convert_to_czk.js");
+
 module.exports = async function crowdfunding_campaign_table(tp, pledged) {
     const app = tp.app;
     const file = tp.config.target_file;
     let content = await app.vault.read(file);
-    const normalize = tp.user["normalize_prompt_output"];
+    const adapter = app.vault.adapter;
     const currency = String(tp.frontmatter.currency ?? "CZK").trim().toUpperCase();
 
     if (!pledged) {
@@ -28,7 +31,7 @@ module.exports = async function crowdfunding_campaign_table(tp, pledged) {
 
         const promptDefault = defaultValue === 0 ? "" : String(defaultValue);
         const cost = normalize.toNumber(await tp.system.prompt(`Enter cost for ${type}:`, promptDefault));
-        const costCzk = normalize.toNumber(await tp.user["convert_currency_to_czk"](tp, currency, cost));
+        const costCzk = normalize.toNumber(await convertCurrencyToCzk(adapter, currency, cost));
 
         return { type, name, cost, costCzk };
     }

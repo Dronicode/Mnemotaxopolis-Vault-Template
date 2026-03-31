@@ -1,7 +1,10 @@
+const normalize = require("../utils/normalize_value.js");
+const convertCurrencyToCzk = require("../utils/currency_convert_to_czk.js");
+
 module.exports = async function crowdfunding_campaign_stretch_pay(tp, pledged) {
     const app = tp.app;
     const file = tp.config.target_file;
-    const normalize = tp.user["normalize_prompt_output"];
+    const adapter = app.vault.adapter;
 
     let stretch_pay;
     if (pledged) {
@@ -31,7 +34,7 @@ module.exports = async function crowdfunding_campaign_stretch_pay(tp, pledged) {
             )
         );
 
-        installment_total_czk = parseFloat(await tp.user["convert_currency_to_czk"](tp, currency, installment_total));
+        installment_total_czk = parseFloat(await convertCurrencyToCzk(adapter, currency, installment_total));
 
         const monthOffset = `P${installments - 1}M`;
         final_payment_date = tp.date.now("YYYY-MM-DD", monthOffset, end_date);
