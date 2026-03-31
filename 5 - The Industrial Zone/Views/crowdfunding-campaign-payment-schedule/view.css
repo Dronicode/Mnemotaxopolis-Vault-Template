@@ -1,0 +1,44 @@
+.crowdfunding-payment-schedule table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.crowdfunding-payment-schedule th,
+.crowdfunding-payment-schedule td {
+    padding: 0.2rem 0.5rem;
+    line-height: 1.2;
+}
+
+.crowdfunding-payment-schedule thead,
+.crowdfunding-payment-schedule thead tr,
+.crowdfunding-payment-schedule thead th {
+    background: var(--background-secondary);
+    font-weight: 600;
+}
+
+.crowdfunding-payment-schedule tbody tr:nth-child(odd) {
+    background: color-mix(in srgb, var(--background-primary) 92%, var(--text-normal) 8%);
+}
+
+.crowdfunding-payment-schedule tbody tr:nth-child(even) {
+    background: var(--background-primary);
+}
+
+.crowdfunding-payment-schedule tbody tr:hover {
+    background: color-mix(in srgb, var(--background-primary) 75%, var(--interactive-accent) 25%) !important;
+}
+
+.crowdfunding-payment-schedule td:not(:first-child),
+.crowdfunding-payment-schedule th:not(:first-child) {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.crowdfunding-payment-schedule td:last-child,
+.crowdfunding-payment-schedule th:last-child {
+    font-weight: 700;
+}
+
+.crowdfunding-payment-schedule .crowdfunding-zero {
+    color: var(--text-muted);
+}

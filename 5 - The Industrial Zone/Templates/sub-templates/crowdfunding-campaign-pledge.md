@@ -1,6 +1,12 @@
 <%*
 const file = tp.config.target_file;
 const status = String(tp.frontmatter.status ?? "").trim().toLowerCase();
+const paid = tp.frontmatter.paid === true;
+
+if (paid) {
+    tR = "";
+    return;
+}
 
 const pledged = status === "cancelled"
     ? false

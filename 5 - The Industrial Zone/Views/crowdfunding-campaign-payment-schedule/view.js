@@ -2,11 +2,10 @@ const buildPaymentSchedule = require("5 - The Industrial Zone/Scripts/dataview/c
 
 /**
  * Format a numeric table cell.
- * Zero values are shown as "-" to make empty currencies obvious.
  */
 function formatAmount(value) {
     const amount = Number(value) || 0;
-    return amount === 0 ? "-" : amount.toFixed(2);
+    return amount === 0 ? '<span class="crowdfunding-zero">0</span>' : amount.toFixed(2);
 }
 
 /**
@@ -42,7 +41,9 @@ const currencies = Array.isArray(options.currencies) && options.currencies.lengt
     ? options.currencies
     : ["USD", "EUR", "GBP", "CZK"];
 
-/**
+dv.container.classList.add("crowdfunding-payment-schedule");
+
+/*e
  * Load all tagged crowdfunding campaign pages through Dataview.
  */
 const pages = dv.pages(options.tag ?? "#crowdfund-campaign").array();
@@ -52,7 +53,7 @@ const pages = dv.pages(options.tag ?? "#crowdfund-campaign").array();
  */
 const schedule = await buildPaymentSchedule(app, pages, {
     currencies,
-    debug: true,
+    debug: false,
 });
 
 /**

@@ -37,9 +37,7 @@ const status = (await tp.system.suggester(
     "Select campaign status"
 )) ?? statusOptions[0];
 
-const pledged = status === "cancelled"
-    ? false
-    : ((await tp.system.suggester(["false", "true"], [false, true], false, "Pledged?")) ?? false);
+const pledged = false
 const currency = await tp.system.suggester(["USD", "EUR", "GBP", "CZK"], ["USD", "EUR", "GBP", "CZK"], false, "Select currency");
 const pledge_total = 0;
 const pledge_total_czk = 0;
@@ -50,10 +48,7 @@ const installment_total = 0;
 const installment_total_czk = 0;
 const final_payment_date = end_date;
 
-let paid = false;
-if (pledged && tp.date.now("YYYY-MM-DD") >= final_payment_date) {
-    paid = (await tp.system.suggester(["false", "true"], [false, true], false, "Paid?")) ?? false;
-}
+const paid = false;
 const delivery_date = await tp.system.prompt("Enter expected delivery date (YYYY-MM-DD)", end_date);
 const year = String(end_date).slice(0, 4);
 const note_title = `${title} (${platform} - ${year})`;
@@ -83,13 +78,30 @@ arrived: false
 ---
 # <% note_title %>
 
-## Campaign Status
+## Campaign Controls
+
 ```meta-bind-button
 style: primary
 label: Update Status
 actions:
   - type: runTemplaterFile
     templateFile: "5 - The Industrial Zone/Templates/sub-templates/crowdfunding-campaign-status.md"
+```
+
+```meta-bind-button
+style: primary
+label: Toggle Paid
+actions:
+  - type: runTemplaterFile
+    templateFile: "5 - The Industrial Zone/Templates/sub-templates/crowdfunding-campaign-paid.md"
+```
+
+```meta-bind-button
+style: primary
+label: Toggle Arrived
+actions:
+  - type: runTemplaterFile
+    templateFile: "5 - The Industrial Zone/Templates/sub-templates/crowdfunding-campaign-arrived.md"
 ```
 
 ## Pledge Breakdown

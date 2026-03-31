@@ -18,6 +18,8 @@ await tp.app.fileManager.processFrontMatter(file, (frontmatter) => {
     frontmatter.status = status;
     if (status === "cancelled") {
         frontmatter.pledged = false;
+        frontmatter.paid = false;
+        frontmatter.arrived = false;
     }
 });
 
