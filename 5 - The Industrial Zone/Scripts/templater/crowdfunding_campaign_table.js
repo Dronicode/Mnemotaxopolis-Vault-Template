@@ -108,7 +108,7 @@ module.exports = async function crowdfunding_campaign_table(tp, pledged) {
 | Type       | Name       | Cost (${currency}) | Cost (CZK) |
 |------------|------------|------|------------|
 ${resultingRows.map((row) => `| ${row.type} | ${row.name} | ${row.cost.toFixed(2)} | ${row.costCzk.toFixed(2)} |`).join("\n")}
-| **total**  |            | ${total.toFixed(2)} | ${totalCzk.toFixed(2)} |
+| **Total**  |            | ${total.toFixed(2)} | ${totalCzk.toFixed(2)} |
 `;
 
     let newContent;

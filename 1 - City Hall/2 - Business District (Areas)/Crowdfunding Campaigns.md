@@ -1,6 +1,6 @@
 # Crowdfunding Campaigns
 
-## Crowdfunding Campaigns List
+## Campaign List
 
 ![[Crowdfund Campaigns.base]]
 
