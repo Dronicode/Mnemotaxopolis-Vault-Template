@@ -1,0 +1,47 @@
+properties:
+  note.final_payment_date:
+    displayName: Final Date
+  note.pledged:
+    displayName: Pledged
+  note.pledge_total:
+    displayName: Total
+  note.currency:
+    displayName: Cur.
+  note.pledge_total_czk:
+    displayName: Total CZK
+  note.installments:
+    displayName: Installments
+  note.installment_total:
+    displayName: Installment
+  note.installment_total_czk:
+    displayName: Installment CZK
+  note.end_date:
+    displayName: End Date
+  note.stretch_pay:
+    displayName: Str Pay
+  note.paid:
+    displayName: Paid
+  note.status:
+    displayName: Status
+  file.name:
+    displayName: Name
+  note.publisher:
+    displayName: Publisher
+  note.platform:
+    displayName: Platform
+views:
+  - type: table
+    name: Table
+    filters:
+      and:
+        - file.tags.contains("crowdfund-campaign")
+        - status == "cancelled"
+    order:
+      - file.name
+      - platform
+      - publisher
+      - end_date
+    sort: []
+    columnSize:
+      file.name: 364
+      note.end_date: 108

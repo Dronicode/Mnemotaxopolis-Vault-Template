@@ -1,52 +1,52 @@
 properties:
   note.final_payment_date:
-    displayName: Final Payment Date
+    displayName: Final Date
   note.pledged:
     displayName: Pledged
   note.pledge_total:
-    displayName: Pledge Total
+    displayName: Total
   note.currency:
-    displayName: Currency
+    displayName: Cur.
   note.pledge_total_czk:
-    displayName: Pledge CZK
+    displayName: Total CZK
   note.installments:
     displayName: Installments
   note.installment_total:
-    displayName: Installment Total
+    displayName: Installment
   note.installment_total_czk:
     displayName: Installment CZK
   note.end_date:
     displayName: End Date
   note.stretch_pay:
-    displayName: Stretch Pay
+    displayName: Str Pay
+  note.paid:
+    displayName: Paid
+  note.status:
+    displayName: Status
+  file.name:
+    displayName: Name
+  note.delivery_date:
+    displayName: ETA
 views:
   - type: table
     name: Table
     filters:
       and:
         - file.tags.contains("crowdfund-campaign")
+        - arrived == true
     order:
       - file.name
-      - pledged
-      - paid
+      - delivery_date
       - currency
       - pledge_total
       - pledge_total_czk
-      - stretch_pay
-      - installments
-      - installment_total
-      - installment_total_czk
-      - end_date
       - final_payment_date
     sort:
-      - property: pledged
+      - property: delivery_date
         direction: DESC
     columnSize:
-      file.name: 257
-      note.currency: 89
-      note.pledge_total: 113
-      note.pledge_total_czk: 111
-      note.installments: 113
-      note.installment_total: 141
-      note.installment_total_czk: 133
-      note.end_date: 113
+      file.name: 364
+      note.currency: 57
+      note.pledge_total: 63
+      note.pledge_total_czk: 91
+      note.final_payment_date: 158

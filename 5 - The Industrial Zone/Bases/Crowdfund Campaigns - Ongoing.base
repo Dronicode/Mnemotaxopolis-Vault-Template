@@ -1,0 +1,63 @@
+properties:
+  note.final_payment_date:
+    displayName: Final Date
+  note.pledged:
+    displayName: Pledged
+  note.pledge_total:
+    displayName: Total
+  note.currency:
+    displayName: Cur.
+  note.pledge_total_czk:
+    displayName: Total CZK
+  note.installments:
+    displayName: Installments
+  note.installment_total:
+    displayName: Installment
+  note.installment_total_czk:
+    displayName: Installment CZK
+  note.end_date:
+    displayName: End Date
+  note.stretch_pay:
+    displayName: Str Pay
+  note.paid:
+    displayName: Paid
+  note.status:
+    displayName: Status
+  file.name:
+    displayName: Name
+  note.platform:
+    displayName: Platform
+views:
+  - type: table
+    name: Table
+    filters:
+      and:
+        - file.tags.contains("crowdfund-campaign")
+        - status == "ongoing"
+    order:
+      - file.name
+      - pledged
+      - end_date
+      - platform
+      - currency
+      - pledge_total
+      - pledge_total_czk
+      - installment_total
+      - installment_total_czk
+      - stretch_pay
+      - final_payment_date
+    sort:
+      - property: pledged
+        direction: DESC
+      - property: end_date
+        direction: ASC
+    columnSize:
+      file.name: 361
+      note.pledged: 5
+      note.currency: 57
+      note.pledge_total: 63
+      note.pledge_total_czk: 91
+      note.installment_total: 101
+      note.installment_total_czk: 133
+      note.end_date: 108
+      note.final_payment_date: 158
