@@ -1,11 +1,11 @@
-const normalize = require("../utils/normalize_value.js");
-const convertCurrencyToCzk = require("../utils/currency_convert_to_czk.js");
-
 module.exports = async function crowdfunding_campaign_table(tp, pledged) {
     const app = tp.app;
     const file = tp.config.target_file;
     let content = await app.vault.read(file);
     const adapter = app.vault.adapter;
+    
+    const normalize = require(adapter.getFullPath("5 - The Industrial Zone/Scripts/utils/normalize_value.js"));
+    const convertCurrencyToCzk = require(adapter.getFullPath("5 - The Industrial Zone/Scripts/utils/currency_convert_to_czk.js"));
     const currency = String(tp.frontmatter.currency ?? "CZK").trim().toUpperCase();
 
     if (!pledged) {

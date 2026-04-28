@@ -1,4 +1,7 @@
-const buildPaymentSchedule = require("5 - The Industrial Zone/Scripts/dataview/crowdfunding_campaign_payment_schedule.js");
+const adapter = dv.app?.vault?.adapter;
+const buildPaymentSchedule = adapter
+    ? require(adapter.getFullPath("5 - The Industrial Zone/Scripts/dataview/crowdfunding_campaign_payment_schedule.js"))
+    : null;
 
 /**
  * Format a numeric table cell.

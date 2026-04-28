@@ -1,6 +1,3 @@
-const normalize = require("../utils/normalize_value.js");
-const convertCurrencyToCzk = require("../utils/currency_convert_to_czk.js");
-
 /**
  * Extract the YYYY-MM month key from a YYYY-MM-DD date string.
  */
@@ -258,6 +255,14 @@ async function appendRowTotalsInCzk(app, rows, currencies) {
  * - splits results into upcoming and history tables
  */
 module.exports = async function crowdfunding_campaign_payment_schedule(app, pages, options = {}) {
+    const adapter = app?.vault?.adapter;
+    if (!adapter) {
+        throw new Error("A vault adapter is required to load utility modules.");
+    }
+
+    const normalize = require(adapter.getFullPath("5 - The Industrial Zone/Scripts/utils/normalize_value.js"));
+    const convertCurrencyToCzk = require(adapter.getFullPath("5 - The Industrial Zone/Scripts/utils/currency_convert_to_czk.js"));
+
     const debug = options.debug === true;
     const currencies = Array.isArray(options.currencies) && options.currencies.length > 0
         ? options.currencies.map((currency) => normalize.toCurrency(currency))
